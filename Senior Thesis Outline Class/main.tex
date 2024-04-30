@@ -1,0 +1,2315 @@
+\documentclass{scrippsthesisclass}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing, calligraphy, intersections, decorations.markings}
+\usepackage[shortlabels]{enumitem}
+\usepackage{natbib} % If additional options needed beyond the class definition
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+% \usepackage{geometry} % Uncomment if you need to customize the document margins
+
+% Theorem Environments Setup
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem*{remark}{Remark}
+
+\bibliographystyle{plain} % Ensure compatibility with your citation requirements
+
+\title{An Exploration of Results in the Advancement of the  Erd\H{o}s Distance Problem}
+\author{Ella Young}
+\advisor{Winston Ou}
+\reader{Asuman Aksoy}
+\thesismonth{April}
+\date{April 2024}
+
+\begin{document}
+\newgeometry{left=2.5cm,right=2.5cm}
+\maketitle
+\restoregeometry
+\tableofcontents
+\begin{abstract}
+    Following the outline of the 2010 book \textit{The Erd\H{o}s Distance Problem} by Julia Garibaldi, Alex Iosevich, and Steven Senger, this thesis presents in greater detail the development of results in the Erd\H{o}s distance problem in discrete geometry. 
+    This problem asks the question: given $n$ points in the plane, what is the minimum number of distinct distances determined by these points?
+    We provide detailed proofs for results illuminated by Erd\H{o}s, Moser, Sz\'{e}kely, Solymosi, and T\'{o}th.
+    Additionally, the thesis provides necessary definitions and results in the fields of graph theory and incidence theory, including prominent results by Szemer\'{e}di, Trotter, and Beck. 
+    The thesis aims to provide a detailed and accurate companion to the literature surrounding this topic, with all theorems, lemmas, and corollaries rigorously proven. 
+\end{abstract}
+
+\begin{acknowledgments}
+I could not have completed this thesis (or my undergraduate education) without the immense support of those around me.
+
+To my parents - Thank you for supporting me since the \textit{literal} day one.
+I could not have achieved half of the accomplishments that I have without you in my corner. 
+
+To Benjamin Hewitt - You're my rock. 
+Thanks for always listening when I talk about math, or anything else. 
+
+To my friends from home and Scripps (BMBW, TPM, TNQ - you know who you are) - The support you provide from simply being in my life is more than you know. Thank you.
+
+To Winston Ou - Thank you for meeting with me so regularly to talk about the material in my thesis; 
+I couldn't have understood half of the ideas presented here without your guidance. 
+
+\end{acknowledgments}
+\chapter{Introduction}
+\section{Outline of Erd\H{o}s's Problem}
+
+Let $P$ be a set of $n$ distinct points in the Euclidean plane $\mathbb{R}^2$. 
+Between any pair of points $(x_1, y_1)$ and $(x_2, y_2)$, the humble Euclidean metric, given by $\sqrt{(x_1 -x_2)^2 + (y_1 - y_2)^2}$, provides a distance between them. 
+Let $\Delta(P)$ denote the set of all distances between points.
+It is not guaranteed that every pair of points provides a distinct distance to $\Delta(P)$. 
+
+
+For example, let $n = 3$. 
+We can construct an orientation of these points (namely, an equilateral triangle), such that there is only one distinct distance between points. 
+\begin{center}
+\begin{tikzpicture}
+    % Set radius of the circumscribed circle
+    \def\radius{1.5cm} % Reduced radius for a smaller triangle
+    
+    % Draw the equilateral triangle
+    \node[draw, circle, fill=black, inner sep=0.8pt] (A) at (90:\radius) {};
+    \node[draw, circle, fill=black, inner sep=0.8pt] (B) at (210:\radius) {};
+    \node[draw, circle, fill=black, inner sep=0.8pt] (C) at (330:\radius) {};
+    
+    % Connect the vertices
+    \draw (A) -- (B) -- (C) -- (A);
+\end{tikzpicture}
+\end{center}
+
+In this instance, $|\Delta(P)| = 1$. 
+
+However, if we add an extra point to let $n = 4$, then there is no way to place your points such that there are fewer than $2$ distinct distances (namely, the side length and diagonal of a square): 
+
+\begin{center}
+\begin{tikzpicture}
+    % Set the side length of the square
+    \def\sidelength{2cm}
+    
+    % Draw the square with vertices
+    \node[draw, circle, fill=black, inner sep=1pt] (A) at (0,0) {};
+    \node[draw, circle, fill=black, inner sep=1pt] (B) at (\sidelength,0) {};
+    \node[draw, circle, fill=black, inner sep=1pt] (C) at (\sidelength,\sidelength) {};
+    \node[draw, circle, fill=black, inner sep=1pt] (D) at (0,\sidelength) {};
+    
+    % Connect the vertices to form the square
+    \draw (A) -- (B) -- (C) -- (D) -- (A);
+    
+    % Draw the diagonals
+    \draw (A) -- (C);
+    \draw (B) -- (D);
+\end{tikzpicture}
+\end{center}
+Let $f(n)$ denote the minimum size of $\Delta(P)$ when $|P| = n$. 
+To contextualize this with the above examples: we would say $f(3) = 1$ and $f(4) = 2$. 
+
+The Erd\H{o}s distinct distances problem, first posed by Hungarian mathematician Paul Erd\H{o}s,  asks the following: given $n$ distinct points in a plane, what is the minimum number of distinct distances, $f(n)$, determined by these $n$ points? 
+This question is primarily concerned with asymptotic behavior, asking what happens to $f(n)$ as $n$ gets very large.  
+
+Erd\H{o}s conjectured that $f(n) \geq C\frac{n}{\sqrt{\log n}}$ for some $C > 0$.
+% Write Erdos conjectures
+
+Although Erd\H{o}s himself initially proposed the problem, as well as established a preliminary bound, it  took several decades of math research, as well as concepts from graph theory and incidence theory, to improve upon his first result. 
+
+This thesis is loosely based on the book \textit{The Erd\H{o}s Distance Problem} by Julia Garibaldi, Alex Iosevich, and Steven Senger. 
+Upon reading this book for an introduction to the content, I discovered that many of the proofs provided were difficult to understand, and it often required referencing the original papers from which Garibaldi et al. sourced their works. 
+This thesis seeks to serve as a companion to someone reading this book and other related literature, and to hopefully provide a new and more lucid approach to the concepts.
+Theorems, lemmas, corollaries, and other relevant statements that are ``trivial,'' ``obvious,'' or ``left as an exercise'' are explained. 
+% Change me
+
+The thesis will begin with initial results toward the problem, and work towards increasingly modern results. 
+Chapters 1 and 2 will go through the first results proven in the field, given by Erd\H{o}s \cite{Erdos46} and Moser \cite{Moser52}.
+From there, I will introduce basic concepts in graph theory and incidence theory, which will be crucial in understanding later bounds proven by Sz\'{e}kely \cite{SzekelyPaper} and Solymosi and T\'{o}th \cite{Solymosi}. 
+The paper ends with the discussion of more advanced results and the posing of some questions for future inquiry. 
+\section{Notes on Notation}
+Because the Erd\H{o}s distance problem is concerned more with asymptotic behavior, certain notation will be used to emphasize this behavior and de-emphasize things like constants and other less consequential bounds. 
+
+If we say $f(n) \lesssim g(n)$, that means that $f(n) \leq Cg(n)$ for some fixed constant $C$ which does not depend on $n$. 
+Similarly, $f(n) \gtrsim g(n)$ denotes $f(n) \geq Cg(n)$ for a fixed constant $C$, not dependent on $n$.
+Finally, $f(n) \approx g(n)$ denotes that $f(n) = Cg(n)$, again for a fixed $C$ not dependent on $n$. 
+
+Additionally, this thesis utilizes big-$O$ and $\Omega$ notation. 
+If $f(n) = O(g(n))$, that denotes that there exists an $N \in \mathbb{R}$ such that for all $n \geq N$, $f(n) \lesssim g(n)$. 
+Alternatively, if $f(n) = \Omega(g(n))$, then for sufficient $n$, $f(n) \gtrsim g(n)$. 
+If $f(n) = o(g(n))$, then that means $\lim \limits_{n \to \infty} \frac{f(n)}{g(n)} = 0$. 
+Intuitively, $f(n0 = o(g(n))$ means that $f(n)$ does not grow as quickly as $g(n)$.
+For simplicity's sake, several ideas that follow as immediate results of the definition of $\Omega$, big-$O$, and little-$O$ notation are, for simplicity's sake, taken for granted in many of the proofs presented here. 
+A compilation of these results and their corresponding proofs can be found in Appendix A. 
+
+The cardinality, or number of elements, of a set $A$ will be given by $|A|$. 
+Let $\emptyset$ denote the empty set, or the only set such that $|\emptyset| = 0$. 
+For two sets $A$ and $B$, $A\backslash B$ denotes the complement of $B$ in $A$. 
+The Euclidean distance between two points $p$ and $q$ will be denoted by $|p - q|$. 
+\chapter{Initial Bounds}
+\section{$n^{\frac{1}{2}}$ bound}
+
+In Erd\H{o}s's crucial first paper on the subject, \cite{Erdos46}, he established an initial lower and upper bound, both of which are presented here. 
+
+\begin{theorem} \cite{Erdos46}
+Let $P$ be a set of $n$ points in the Euclidean plane and $\Delta(P)$ be the set of distinct distances between points of $P$. Then,
+\[
+|\Delta(P)| = \Omega \left(n^{\frac{1}{2}}\right).
+\]
+\end{theorem}
+The following proof is based on $\cite{thebook}$.
+\begin{proof}
+    Fix a point $p \in P$. 
+    Denote $t$ as the number of distinct distances from $p$ to the remaining elements of $P\backslash \{p\}$. 
+    Then, we can draw $t$ distinct circles, centered at $p$, such that the union of all circles contains all points in $P\backslash \{p\}$. 
+    Naturally, $|\Delta(P)| \geq t$.
+    By the pigeonhole principle [see Appendix A], then there exists one circle that contains at least $\frac{n}{t}$ points. 
+    Similarly, if we split this circle into two semicircles, one semicircle must contain at least $\frac{n}{2t}$ points. 
+    Let $r$ denote the number of points on this semicircle. 
+    Traversing the semicircle clockwise from one endpoint to the other, sequentially denote the points on this semicircle as $q_1, q_2, \dots q_r$.
+    
+    Then, $|q_1 - q_2| < |q_1 - q_3| < |q_1 - q_4| < \dots < |q_1 - q_r|$.
+    For each $q_i$ with $2 \leq i \leq r$, we can construct a circle centered at $q_1$ with radius $|q_1 - q_i|$ that intersects the semicircle exactly once, at $q_i$.
+    Because the $q_i$ are distinct points and all such circles have the same center at $q_1$, that implies that the radii of the circles are distinct. 
+    Therefore, each $q_i$ provides a distinct distance from $q_1$. 
+
+\begin{center}
+\begin{tikzpicture}
+    % Draw the semicircle
+    \draw[thick] (-2,0) arc[start angle=180,end angle=0,radius=2cm];
+
+    % Number of points
+    \newcommand\NumOfPoints{5} % Change this number to set how many points you want
+
+    % Calculate the angle between points
+    \pgfmathsetmacro\AngleIncrement{180/(\NumOfPoints - 1)}
+
+    % Add points and labels on the arc, counterclockwise
+    \foreach \x in {1,...,\NumOfPoints} {
+      \pgfmathsetmacro\PointAngle{180 - (\x - 1) * \AngleIncrement}
+      \node[fill, circle, inner sep=1pt] (q\x) at (\PointAngle:2cm) {};
+      \node[anchor=\PointAngle] at (\PointAngle:2.7cm) {$q_{\x}$};
+    }
+\end{tikzpicture}
+\end{center}
+    
+    Because there are $r$ points on the circle, our semicircle provides $(r -1)$ distinct distances. 
+    Because $r \geq \frac{n}{2t}$, this means at least $\left(\frac{n}{2t} - 1\right)$ distinct distances are introduced by this semicircle alone.
+    It follows that $|\Delta(P)|  \geq r - 1 \geq \frac{n}{2t} - 1$.
+
+    Combining this with the earlier observation, we can conclude that $|\Delta(P)| \geq \max \{t, \frac{n}{2t} - 1\}$. 
+    If $t > n^{\frac{1}{2}}$, then we are done. 
+    Otherwise, then $|\Delta(P)| \geq \frac{n}{2t} - 1$.
+    Then, because $t \leq n^{\frac{1}{2}}$, $|\Delta(P)|  \geq \frac{n}{2t} - 1 \geq \frac{n}{2n^{\frac{1}{2}}} - 1$. 
+    In either case, $|\Delta(P)| \gtrsim n^{\frac{1}{2}}$, and thus the proof is complete. 
+\end{proof}
+
+\begin{theorem}
+    Let $P$ be a set of $n$ points in the Euclidean plane. Then,
+    \[
+    |\Delta(P)| = O\left(\frac{n}{\sqrt{\log n}}\right)
+    \].
+\end{theorem}
+\begin{proof}
+    Consider the set of points of the form $(x, y)$ such that $x$ and $y$ are integers and such that $0 \leq x, y \leq \sqrt{n}$.
+    Let $(x_1, y_1)$ and $(x_2, y_2)$ be any two such points, and let $u = (x_1 - x_2)$ and $v = (y_1 - y_2)$. 
+    Then, any distinct distance between points in this grid are of the form $\sqrt{u^2 + v^2}$. 
+    Because $u, v < \sqrt{n}$, then $u^2 + v^2$ is bounded above by $2n$.
+    % How to write this? 
+    The following lemma now allows us to complete the proof:
+    \begin{lemma}
+        The number of integers of the form $u^2 + v^2$, $u, v \in \mathbb{Z}$ less than $n$ is $O\left(\frac{n}{\sqrt{\log n}}\right)$. 
+    \end{lemma}
+    The proof of this lemma is fairly complicated and beyond the scope of this thesis, but interested readers can find one in \cite{NumberTheory}.
+    % Proof is heady and involves prime number theorem
+    Therefore, the number of integers of the form $u^2 + v^2$, $u, v \in \mathbb{Z}$ that are less than $2n$ (and therefore, the number of possible distances) is $O\left(\frac{2n}{\sqrt{\log 2n}}\right) = O\left(\frac{n}{\sqrt{\log n}}\right)$. 
+    Therefore, the number of distances is bounded above by $c\frac{n}{\sqrt{\log n}}$, as desired. 
+\end{proof}
+
+\newpage
+
+\section{$n^{\frac{2}{3}}$ bound} 
+Leo Moser improved on Erd\H{o}s's initial $\sqrt{n}$ result. The following proof is based on a combination of Moser's original proof from \cite{Moser52} and the proof provided in \cite{thebook}.
+\begin{theorem}
+    Let $P$ be a set of $n$ points in the plane. Then, 
+    \[
+    |\Delta(P)| = \Omega \left(n^{\frac{2}{3}}\right).
+    \]
+\end{theorem}
+\begin{proof}
+    Consider two points $x$, $y$ in your set $P$ such that the distance between them is the smallest possible distance between any two points of $P$. 
+    Denote the midpoint between $x$ and $y$ as $o$. 
+    
+    Consider the line passing through $x$ and $y$.
+    This line divides the plane into two half-planes.
+    By the pigeonhole principle, one of these half-planes contains at least half of all the points of $P$. 
+    Denote this subset of $P$ in this half-plane as $P'$.
+    By construction, $|P'| \geq \frac{n}{2}$. 
+    
+    Now, draw half-open annuli centered at $o$, each of thickness $\frac{|x-y|}{2}$, until all points of $P'$ are contained in an annulus. 
+    Each annulus contains its outer radius and not its inner radius.
+    For notational simplicity, let $\delta = \frac{|x-y|}{2}$ denote the thickness of each annulus. 
+    \begin{center}
+    \begin{tikzpicture}[scale=3]
+    % Define line thickness
+    
+    % Draw large semi-circle
+    \draw[black, line width=0.75mm] (2,0) arc (0:180:2cm) -- cycle;
+
+    % Draw other semi-circles
+    \draw[black, line width=0.75mm] (1.5,0) arc (0:180:1.5cm) -- cycle;
+        \draw[black, line width=0.75mm] (1.75,0) arc (0:180:1.75cm) -- cycle;
+    \draw[black, line width=0.75mm] (1.25,0) arc (0:180:1.25cm) -- cycle;
+    \draw[black, line width=0.75mm] (1,0) arc (0:180:1cm) -- cycle;
+    \draw[black, line width=0.75mm] (0.75,0) arc (0:180:0.75cm) -- cycle;
+    \draw[black, line width=0.75mm] (0.5,0) arc (0:180:0.5cm) -- cycle;
+    \draw[black, line width=0.75mm] (0.25,0) arc (0:180:0.25cm) -- cycle;
+
+    
+    % Draw base line
+    \draw[black, line width=0.75mm] (-0.5,0) -- (0.5,0);
+
+    % Add points
+    \foreach \x/\y in {
+        -1.45/0.73,
+        1.68/0.65,
+        1.12/0.54,
+        -0.64/1.18,
+        -0.63/1.84,
+        0.77/1.03,
+        0.12/1.78,
+        0.94/1.54,
+        -1.17/1.17,
+        -0.31/0.71,
+        0.36/0.23,
+        -1.85/0.03,
+        1.42/0.04,
+        -0.6/0.13,
+        0.27/1.02,
+        1.32/1.12,
+        -0.93/0.54,
+        1.96/0.06,
+        -1.26/0.12,
+        -1.92/0.54,
+        -0.15/1.31,
+        0.85/0.1
+    }
+    \node[fill = black, circle, inner sep = 1.5pt] at (\x, \y) {};
+    ;
+    \node[fill = black, circle, inner sep = 1.5pt] (O) at (0, 0) {};
+    \node[below] at (O) {$o$};
+    \node[fill = black, circle, inner sep = 1.5pt] (X) at (-0.25, 0) {};
+    \node[below] at (X) {$x$};
+    \node[fill = black, circle, inner sep = 1.5pt] (Y) at (0.25, 0) {};
+    \node[below] at (Y) {$y$};
+    % Brace notation
+    \draw [decorate,decoration={brace,amplitude=5pt,mirror,raise=0.5ex}]
+    (-1.25,0) -- (-1,0) node[midway,yshift=-1.4em]{$\frac{|x-y|}{2}$};
+    \end{tikzpicture}
+\end{center}
+    Observe that because all points of $P'$ must be at least $2\delta$ away from $x$, there can be no points of $P$ in the semicircle centered at $o$ of radius $\delta$.
+    Therefore, the first annulus that can contain any points of $P'$ has an inner radius of at least $\delta$.
+
+    In this current setup, it is possible that there could be multiple points that are the same distance from $x$ or $y$, but in different annuli. 
+    Therefore, our next step is to strategically select a third of the annuli so that this cannot happen. 
+    Consecutively number the annuli, starting from the center and moving outwards, and then categorize them based on the value of this number modulo $3$. 
+    Then, by the pigeonhole principle, at least one of these subsets (namely, $0$, $1$, or $2$) must contain at least $\frac{1}{3}$ of the points of $P'$.
+
+    We now focus on this particular subset and denote it $P''$. 
+    Observe that $|P''| \geq \frac{n}{6}$.
+
+    This removal of roughly $\frac{2}{3}$ of the annuli is to ensure that any distance contributed from $x$ or $y$ by one annulus is not contributed by another.
+
+    To understand why this is the case, consider the annulus centered at $o$ with an outer radius of $r$ and inner radius of $r - \delta$. 
+    Let $q$ be an arbitrary point in this annulus. 
+    By construction, 
+    \begin{align}
+        r - \delta < |q - o| \leq r.
+    \end{align}
+    We seek to place a bound on $|q-x|$ (and, by similar logic $|q-y|$). 
+    Using the triangle inequality (and reverse triangle inequality), we can state:
+
+    \begin{align}
+        \left| |q-o| - |o-x| \right| \leq |q - x| \leq |q-o| + |o-x|.
+    \end{align}
+
+    We have already observed that the first annulus that can contain a point of $P'$ has an inner radius of at least $\delta$.
+    Therefore, because $|o - x| = \delta$, $|q - o| - |o - x| \geq \delta - \delta = 0$, meaning the absolute values are not necessary.
+
+    Now, because $|o-x| = \frac{|x-y|}{2} = \delta$, and (2.1), then 
+    \begin{align}
+        (r-\delta) - \delta \leq |q - x| \leq r + \delta
+    \end{align}
+    and therefore
+    \begin{align}
+        r - 2\delta \leq |q - x| \leq r + \delta.
+    \end{align}
+    Because the annulus does not contain its inner radius, we can slightly tighten this bound to state
+    \begin{align}
+        r - 2\delta < |q - x| \leq r + \delta
+    \end{align}
+    The same logic applies to construct the bound $r - 2\delta < |q - y| \leq r + \delta$. 
+
+    Then, the immediately next annulus has an outer radius of $r + \delta$ and therefore, by similar logic, its points are between $r - \delta$ and $r + 2\delta$ away from $x$ or $y$.
+    Therefore, there could conceivably be two points in distinct annuli who are both the same distance $d$, $r - \delta < d < r + \delta$, from $x$ or $y$.
+
+    The next annulus with \textit{no} such overlap in ranges is the one that is three annuli away from the first, with outer radius of $r + 3\delta$.
+    Then, for some point $q'$ in this annulus, we use the same logic as above to state
+    \begin{align}
+        r + \delta < |q' - x| \leq r + 4\delta
+    \end{align}
+    and
+    \begin{align}
+        r + \delta < |q' - y| \leq r + 4\delta.
+    \end{align}
+    Therefore, by keeping only every third annulus, we ensure that any distance from $x$ or $y$ contributed by a point in one annulus is not contributed by another. 
+
+    We proceed with the rest of the proof. 
+
+    The annuli form an intuitive partition of $P''$ that we can use to our advantage.
+    Let $\mathcal{A}_j$ refer to the points in the $j$th annulus of $P''$. 
+    Denote $k$ as the number of distinct distances from points in $\mathcal{A}_j$ to $x$ or $y$.
+    For clarity, 
+    \[
+    k = \left|\left(\{|p - x|: p \in \mathcal{A}_j\} \cup \{|p - y|: p \in \mathcal{A}_j \}\right)\right|
+    \]
+    Index these $k$ distances as $d_1, d_2, \dots, d_k$. 
+
+    Now, define the sets $A_l$ and $B_i$ in the following way:
+    \[
+    A_l = \{p \in \mathcal{A}_j : |p - x| = d_l\}
+    \]
+    \[
+    B_i = \{p \in \mathcal{A}_j : |p - y| = d_i\}
+    \]
+    That is, $A_l$ is the set of points in the $j$th annulus, $\mathcal{A}_j$, that are distance $d_l$ away from $x$ for some fixed distance $d_l$.
+    Similarly, $B_i$ is the set of points in $\mathcal{A}_j$ that are distance $d_i$ away from $y$. 
+    
+    Each point in the $j$th annulus is some distance from $y$, so each point is contained in some $B_i$. 
+    Therefore, the set $A_l$ can be expressed as all points that are $d_l$ distance from $x$ and any distance from $y$:
+    \begin{align}
+         A_l = \bigcup_i (A_l \cap B_i).
+    \end{align}
+    Then, because each point in the $j$th annulus is some distance from $x$ and some distance from $y$, that means that the set of points in the $j$th annulus, $\mathcal{A}_j$, can be expressed as a union of each $A_l$:
+    \begin{align}
+    \mathcal{A}_j = \bigcup_l A_l = \bigcup_{i, l} (A_l \cap B_i).
+    \end{align}
+    Denote the number points in the $j$th annulus to $x$ as $n_j$. 
+    We seek to make a statement about $n_j$, and then sum over the annuli to make a further statement about $n$. 
+
+    Consider the cardinality of $\mathcal{A}_j = \bigcup \limits_{i, l} (A_l \cap B_i)$.
+    We know that there are at most $k$ distinct distances in the $j$th annulus, meaning that there are at most $k$ distinct values of $i$ and $k$ distinct values of $j$. 
+    Therefore, we are unioning over at most $k^2$ sets, so 
+    \begin{align}
+        \left| \bigcup \limits_{i, l} (A_l \cap B_i) \right| \leq k^2 \cdot \max_{i, l} \left|(A_l \cap B_i)\right|.
+    \end{align}
+
+    We now seek an upper bound $\left|(A_l \cap B_i)\right|$.
+    
+    \begin{proposition}
+    Given our construction of $A_l$ and $B_i$, $\max_{i, l} \left|(A_l \cap B_i)\right| = 1$. 
+    \end{proposition}
+    \begin{proof}
+    Consider a point $c \in A_l \cap B_i$.
+    Let $\mathcal{B}(x, d_l)$ denote the set of points at most $d_l$ away from $x$.
+    Similarly, $\mathcal{B}(y, d_i)$ is the set of all points at most $d_i$ away from $y$. 
+    Then, $|x - c| = d_l$ and $|y - c| = d_i$.
+    Because $\mathcal{B}(x, d_l)$ and $\mathcal{B}(y, d_i)$ are circles, they can only intersect each other in two locations, meaning there are only two possible locations for $c$, highlighted below:
+
+\begin{center}
+   \begin{tikzpicture}
+    \coordinate (X) at (0,0);
+    \coordinate (Y) at (2,1);
+
+    \draw[name path=C1] (X) circle (1.5cm);
+    \draw[name path=C2] (Y) circle (1cm);
+
+    \filldraw[black] (X) circle (1pt) node[below left] {$x$};
+    \filldraw[black] (Y) circle (1pt) node[above right] {$y$};
+
+    \path [name intersections={of=C1 and C2, by={A,B}}];
+    \filldraw [red] (A) circle (2pt) node[below right] {};
+    \filldraw [red] (B) circle (2pt) node[above left] {};
+
+    % Add extended dashed line through X and Y using calc library
+    \draw[dashed] ($(X)!-0.2!(Y)$) -- ($(X)!1.2!(Y)$);
+\end{tikzpicture}
+\end{center}
+
+    However, these two candidates for $c$ must be reflections of one another across the line between $x$ and $y$.
+    Because we deliberately chose one half of the points, partitioned along this very line, that means there can only be one such point $c$ in our set.
+    Thus, there can only be at most one point in each such set $(A_l \cap B_i) \subseteq P''$ and therefore
+    \begin{align}
+        \max_{l, i} \left|A_l \cap B_i \right| = 1.
+    \end{align}
+    \end{proof}
+
+    Combining (2.10) and (2.11), we achieve
+    \begin{align}
+    \left| \bigcup \limits_{i, l} (A_l \cap B_i) \right| \leq k^2 \cdot \max_{i, l} \left| (A_l \cap B_i) \right| = k^2 \cdot 1. 
+    \end{align}
+    Therefore, $n_j \leq k^2$ and thus $k \geq \sqrt{n_j}$.
+    That is, the number of distances in the $j$th annulus, given by $k$, is at least $\sqrt{n_j}$, the number of points in the $j$th annulus.
+
+    Now, we can sum over the annuli to make a statement about $P''$ and therefore $P$.
+
+    By construction, the union over all annuli $\mathcal{A}_j$ is $P''$, whose cardinality is at least $\frac{n}{6}$. 
+    Because each $\mathcal{A}_j$ is disjoint by construction, $\left| \bigcup_{j} \mathcal{A}_j \right| = \sum_j |A_j| = \sum_j n_j$.
+    Therefore, 
+    \begin{align}
+    \frac{n}{6} \leq |P''| = \sum_j n_j = \sum_j \sqrt{n_j} \sqrt{n_j}.
+    \end{align}. 
+    Denote $n_{max}$ as the maximum number of points in any of the annuli.
+    That is, $n_{max} = \max \limits_j n_j$.
+    Then, 
+    \begin{align}
+    \frac{n}{6} \leq \sum_j \sqrt{n_j} \sqrt{n_j} \leq \sqrt{n_{max}} \cdot \sum_j \sqrt{n_j}. 
+    \end{align}
+
+    By earlier reasoning, each annulus contributes at least $\sqrt{n_j}$ distinct distances to $X$ or $Y$ - distances which, by construction, cannot be contributed by any other annulus. 
+    Therefore, 
+    \begin{align}
+    \left|\Delta (P'')\right| \geq \sum_j {\sqrt{n_j}}. 
+    \end{align}
+    Plugging (2.15) into (2.14), we find that 
+    \begin{align}
+    \frac{n}{6} \leq \sqrt{n_{max}} \cdot \sum_j \sqrt{n_j}. \leq \sqrt{n_{max}} \cdot \left|\Delta (P'')\right|.
+    \end{align}
+    Then, because $P'' \subseteq P$, naturally $\left|\Delta(P'')\right| \leq \left|\Delta(P)\right|$, so 
+    \begin{align}
+        \frac{n}{6} \leq \sqrt{n_{max}} \cdot \left|\Delta (P'')\right| \leq \sqrt{n_{max}} \cdot \left|\Delta (P)\right|.
+    \end{align}
+    The value we are concerned with is $\left|\Delta (P)\right|$, so it is natural to isolate it:
+    \begin{align}
+    \left|\Delta (P)\right| \geq \frac{n}{6\sqrt{n_{max}}}.
+    \end{align}
+
+    We now seek to remove this $n_{max}$ term so that we can write an inequality \textit{solely} in terms of $n$. 
+    \begin{proposition}
+        $\left| \Delta(P'')\right| \gtrsim n_{max}$.
+    \end{proposition}
+    \begin{proof}
+    This is a result of the construction of our annuli; recall that each annulus has a thickness of $\delta = \frac{|x - y|}{2}$. 
+
+    Each annulus has at most $n_{max}$ points. 
+    Let $l$ denote the leftmost point in the annulus and $r$ an arbitrary other point in the annulus.
+
+\begin{center}
+    \begin{tikzpicture}[scale=3]
+    
+    % Draw other semi-circles
+    \draw[black, line width=0.75mm] (1.25,0) arc (0:180:1.25cm);
+    \draw[black, line width=0.75mm] (1.75,0) arc (0:180:1.75cm);
+    
+
+    % Add points
+    \foreach \x/\y in {
+    -1.65/0.2,
+    -1.10887936/1.27109157,
+    -0.08032717/1.54873793,
+    1.61609513/0.1750142,
+    }
+    \node[fill = black, circle, inner sep = 1.5pt] at (\x, \y) {};
+    ;
+    \end{tikzpicture}
+\end{center}
+
+    Recall, $x$ and $y$ were chosen such that $|x-y| = 2\delta$ was minimal.
+    Therefore, $|l - r| \geq 2\delta$. 
+
+    Consider a second point, $s$, such that $|l - r| = |l - s|$. 
+    That is, $s$ is the same distance away from $l$ as $r$. 
+    Therefore, if $s$ is in the annulus, it must lie on the same ``strip'' of arc length as $r$, as those are the only possible points $|l - r|$ away from $l$ that are in the annulus.
+    There are no points to the right because $l$ is the leftmost point.
+
+    \begin{center}
+    \begin{tikzpicture}[scale=3]
+    \draw[black, line width=0.75mm] (1.25,0) arc (0:180:1.25cm);
+    \draw[black, line width=0.75mm] (1.75,0) arc (0:180:1.75cm);
+    
+    \foreach \x/\y in {
+    -1.65/0.2,
+    -1.10887936/1.27109157,
+    -0.08032717/1.54873793,
+    1.61609513/0.1750142,
+    }
+    \node[fill = black, circle, inner sep = 1.5pt] at (\x, \y) {};
+    ;
+    
+    \node[fill = black, circle, inner sep = 1.5pt] (L) at (-1.65,0.2) {};
+    \draw[dashed] (L) circle (1.2);
+    \draw[line width=1.5pt, red] (L) +(42:1.2) arc (42:67:1.2); % Highlighted arc
+    \node[fill = black, circle, inner sep = 1.5pt] (Q) at (    -1.10887936, 1.27109157) {};
+    \node[above right] at (L) {$l$};
+    \node[above right] at (Q) {$r$};
+    \end{tikzpicture}
+\end{center}
+
+    Notice this red arc intersects with the outer arc and inner arc of the annulus each exactly once.
+    Because this annulus is of thickness $\delta$, that the maximum distance between points on the red arc is $\delta$.
+
+    Therefore, if $s$ is in the annulus, $|r - s| \leq \delta$.
+    However, by assumption, $S$ must be at least $2\delta$ away from $r$.
+    Therefore, $s$ cannot lie on this arc.
+    
+    This means that at most one point in the half-annulus strip can be any specified distance from $l$, and thus the $j$th annulus contributes $n_j - 1$ distinct distances.
+    Therefore,
+    \begin{align}
+    \left|\Delta(P)\right| \geq \sum_{j} (n_j - 1) \geq n_{max} -1.
+    \end{align}
+    This can be more simply put as
+    \begin{align}
+        \left|\Delta(P)\right|  \gtrsim n_{max},
+    \end{align}
+    obtaining the desired result.
+    \end{proof}
+
+    Because $P'' \subseteq P$,
+    \begin{align}
+    \left| \Delta(P) \right| \geq \left| \Delta(P'') \right| \gtrsim n_{max}.
+    \end{align}
+    We now use the inequality from (2.18), along with the result from (2.21) to do the follow algebra and achieve our desired result:
+    \begin{align*}
+        \left|\Delta(P)\right| &\geq \frac{n}{6\sqrt{n_{max}}}\\
+        \left|\Delta(P)\right|^2 &\geq \frac{n^2}{36n_{max}}\\
+        \left|\Delta(P)|\right|^2 \cdot n_{max} &\geq \frac{n^2}{36}\\
+        \left|\Delta(P)|\right|^3 &\gtrsim \left|\Delta(P)|\right|^2 \cdot n_{max} \geq \frac{n^2}{36}\\
+        \left|\Delta(P)|\right|^3 &\gtrsim \frac{n^2}{36}
+    \end{align*}
+    Therefore, we achieve the desired result, $\left|\Delta(P)\right| \gtrsim n^{\frac{2}{3}}$. 
+    \end{proof}
+
+\chapter{Graph Theory and Incidence Theory Basics}
+In the following chapter, we introduce two fields of mathematics, graph theory and incidence theory, as well as related theorems. 
+This chapter provides necessary results that come up in later proofs of results in the Erd\H{o}s distance problem. 
+
+Unless otherwise noted, the definitions and theorems presented here are based on \cite{thebook}.
+\section{Introduction to Graph Theory}
+As the Erd\H{o}s distance problem furthered, mathematicians began to use more concepts from graph theory, the branch of math concerned with graphs and their properties. 
+\begin{defn}[Graph]
+    A \textbf{graph} $G$ is a mathematical object comprised of a set of vertices $V(G)$ and a set of edges $E(G)$.
+\end{defn}
+\begin{defn}[Vertex]
+    A \textbf{vertex}, or \textbf{node}, is a point on a graph.
+\end{defn}
+\begin{defn}[Edge]
+    An \textbf{edge} is a set of two vertices in a graph. 
+\end{defn}
+
+
+It follows that the set of edges $E$ is comprised of sets of size $2$ of elements of $V$. That is, all edges are of the form $\{v_1, v_2\}$ such that $v_1, v_2 \in V$. 
+At first, we will primarily work with \textbf{simple}  graphs - graphs in which a given pair of vertices is connected by no more than $1$ edge. 
+
+As the name suggests, it is often helpful to have a visual representation of graphs. Such visual representations are called \textbf{drawings}. 
+
+\begin{defn}[Drawing]
+    A \textbf{drawing} of a graph is a visualization such that the vertices are represented by points and the edges are represented by lines or arcs between them. 
+\end{defn}
+
+
+Let's take a look at some example graphs.
+
+Begin with the graph $G$, with its set of vertices $\{a, b, c, d, e\}$ and its set of edges $\{\{a, b\},\{b, c\}, \{c, d\}, \{a, d\}, \{c, e\}, \{d, e\}\}$. 
+
+Here is one drawing of the graph $G$:
+\begin{center}
+\begin{tikzpicture}
+    \begin{scope}[every node/.style={circle,thick,draw}]
+        \node (A) at (0,0) {$a$};
+        \node (B) at (2,0) {$b$};
+        \node (C) at (2,2) {$c$};
+        \node (D) at (0,2) {$d$};
+        \node (E) at (1,3) {$e$};
+    \end{scope}
+
+    \begin{scope}[every edge/.style={draw=black,thick}]
+        \path (A) edge (B);
+        \path (B) edge (C);
+        \path (C) edge (D);
+        \path (D) edge (A);
+        \path (C) edge (E);
+        \path (D) edge (E);
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+
+However, the graph can also be represented by the following drawing:
+\begin{center}
+    \begin{tikzpicture}
+    \begin{scope}[every node/.style={circle,thick,draw}]
+        \node (A) at (1,0) {$a$}; % Changed position
+        \node (B) at (3,1) {$b$}; % Changed position
+        \node (C) at (2,3) {$c$}; % Changed position
+        \node (D) at (0,2) {$d$}; % Changed position
+        \node (E) at (3,5) {$e$}; 
+    \end{scope}
+
+    \begin{scope}[every edge/.style={draw=black,thick}]
+        \draw (A) to[bend left] (B);
+        \draw (B) to[bend left] (C);
+        \draw (C) to[bend left] (D);
+        \draw (D) to[bend left] (A);
+        \draw (C) to[bend right] (E);
+        \draw (D) to[bend left] (E);
+    \end{scope}
+    \end{tikzpicture}
+\end{center}
+
+This illustrates an important concept: drawings of graphs are not unique. 
+Although the first and second drawings of $G$ are visually different, they both represent the same nodes and edges and therefore the same graph.
+
+\begin{defn}[Path]
+    A \textbf{path} is a sequence $(v_n)$ of vertices of a graph $G$ such that $\{v_i, v_{i+1}\} \in E(G)$ for all $i$, except the final vertex (if the path is finite).
+\end{defn}
+
+For example, in the above  graph $G$, there is a path between points $e$ and $a$, given by $(e, d, a)$ or $(e, c, b, a)$.
+Intuitively, this means that in any drawing of $G$, one can  start at point $e$ and trace edges of $G$ until they get to point $a$ without lifting their pen. 
+
+\begin{defn}[Connected]
+    A graph is called \textbf{connected} if for each pair of vertices, there exists a path between them. 
+\end{defn}
+
+Another example graph is $H$:
+\begin{center}
+\begin{tikzpicture}
+    \begin{scope}[every node/.style={circle,thick,draw}]
+        \node (B) at (2,0) {$b$};
+        \node (C) at (2,2) {$c$};
+        \node (D) at (0,2) {$d$};
+    \end{scope}
+
+    \begin{scope}[every edge/.style={draw=black,thick}]
+        \path (B) edge (C);
+        \path (C) edge (D);
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+$H$ is constructed from the set of vertices $\{b, c, d\}$, and the set of edges $\{\{b, c\}, \{c, d\}\}$. 
+
+Notice that for graphs $G$ and $H$, $V(H) \subseteq V(G)$ and $E(G) \subseteq E(G)$.
+That is, the graph $H$ can be constructed from elements of the graph $G$. 
+We say that $H$ is a \textbf{subgraph} of $G$. 
+
+\begin{defn}[Planar]
+    A graph is $G$ called \textbf{planar} if a drawing of it can be constructed such that none of the edges cross one another.
+\end{defn}
+
+\begin{defn}[Face]
+    A \textbf{face} is any region of the graph bounded by edges.
+\end{defn}
+
+\begin{theorem}
+    Given a simple, connected planar graph $G$ with $n$ vertices, $e$ edges, and $f$ faces, $n - e + f = 2$
+\end{theorem}
+\begin{proof}
+    Proceed with a proof by induction on the number of edges $e$. 
+    With $1$ edge, in order for the graph to be connected, the graph needs at least $2$ vertices and one face. 
+    Therefore, the equality $n - e + f = 2 - 1 + 1 = 2$ holds. 
+    
+    For the inductive step: assume that the statement holds for some fixed number of edges $e$; we seek to prove its truth for $e + 1$ edges. 
+    Assume you have a graph of $n$ vertices, $e$ edges, and $f$ faces on which the equality $n - e + f = 2$ holds. 
+    Now, add another edge to this graph such that the number of edges becomes $(e + 1)$. 
+    
+    This new edge can come about in one of two ways. 
+    The first is by simultaneously introducing another vertex $x$ such that your new edge $E$ is equal to some $(x, y)$ for your new vertex $x$ and an ``old'' vertex $y$. 
+    If this is the case, then there is no way a new face could be created. 
+    Recall that a face is a region bounded by edges. 
+    In order to create a face, the new vertex $x$ must feature in at least two edges in order to enclose a region. 
+    % Perhaps a diagram here? 
+    Because $y$ is only featured in our new edge, then a new face cannot be created. 
+    Therefore, taking stock of this ``first case'' graph, we have $(n+1)$ vertices, $(e + 1)$ edges, and $f$ faces. 
+    Therefore, the equality $(n + 1) - (e + 1) + f = n - e + f = 2$ holds. 
+
+    In the second case of adding a new edge, we do \textit{not} create a new vertex. 
+    Instead, this creation of a new edge forces the creation of a new face.
+    Suppose you introduced an edge between two points $y$ and $z$ in your graph that do not already have an edge between them, and introducing an edge between them does not make the graph nonplanar.
+    % How to phrase this? 
+    If no such pair of vertices exist, then introduce a new vertex - in which case the first case holds. 
+    By the connected assumption, there must already exist a path from $y$ to $z$. 
+    Therefore, this new edge will complete this path into a cycle, enclosing a region and thus forming a face. 
+    Therefore, we find that $n - (e + 1) + (f + 1) = n - e + f = 2$, so the equality still holds for this graph as well. 
+    Thus, by induction on $e$, $n - e + f = 2$, as desired. 
+\end{proof}
+
+% FIX ME ELLA
+\begin{theorem}
+    Given a simple, connected planar graph $G$ with $e$ edges and $f$ faces, $3f \leq 2e$. 
+\end{theorem}
+\begin{proof}
+    For each edge in $G$, affix one side of the edge with a ``nose'' such that the two sides of the edge can be differentiated from one another. 
+    This example uses our graph $G$ from earlier:
+    \begin{center}
+    \begin{tikzpicture}
+    \begin{scope}[every node/.style={circle,thick,draw}]
+        \node (A) at (0,0) {$a$};
+        \node (B) at (2,0) {$b$};
+        \node (C) at (2,2) {$c$};
+        \node (D) at (0,2) {$d$};
+        \node (E) at (1,3) {$e$};
+    \end{scope}
+    \begin{scope}[every edge/.style={draw=black,thick}]
+        \path (A) edge (B);
+        \path (B) edge (C);
+        \path (C) edge (D);
+        \path (D) edge (A);
+        \path (C) edge (E);
+        \path (D) edge (E);
+    \end{scope}
+\end{tikzpicture}
+    \hfil
+    \begin{tikzpicture}[
+        % Define the style for the ticks
+        tick/.style 2 args={
+            postaction={
+                decorate,
+                decoration={
+                    markings,
+                    mark=at position #1 with {
+                        \draw[-] (0,0) -- (0,#2);
+                    }
+                }
+            }
+        }
+    ]
+
+    % Nodes
+    \begin{scope}[every node/.style={circle,thick,draw}]
+        \node (A) at (0,0) {$a$};
+        \node (B) at (2,0) {$b$};
+        \node (C) at (2,2) {$c$};
+        \node (D) at (0,2) {$d$};
+        \node (E) at (1,3) {$e$};
+    \end{scope}
+
+    % Edges with ticks
+    \begin{scope}[every edge/.style={draw=black,thick}]
+        \draw[tick={0.5}{3pt}] (A) -- (B);
+        \draw[tick={0.5}{3pt}] (B) -- (C);
+        \draw[tick={0.5}{3pt}] (C) -- (D);
+        \draw[tick={0.5}{3pt}] (D) -- (A);
+        \draw[tick={0.5}{3pt}] (C) -- (E);
+        \draw[tick={0.5}{3pt}] (D) -- (E);
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+    % Picture
+    The purpose of the nose is to have an easy way to differentiate between the two sides of each edge (i.e., the ``nosed'' side and the ``empty'' side). 
+    
+    Now, we count the total number of sides (of edges) present in the graph $G$. 
+    There must be $2e$ total sides because each edge has $2$ sides. 
+    Now, we count the number of sides that are facing the interior region of a face. 
+    Each face requires at least $3$ sides, and there are $f$ total faces, so this count of sides is at least $3f$. 
+    Because the number of sides of edges in the interior of faces is less than or equal to the total number of sides of edges, across the whole graph, then, $3f \leq 2e$, as desired.
+\end{proof}
+
+\begin{theorem}
+    Given a simple planar graph $G$ with $e$ edges and $n$ vertices, $e \leq 3n - 6$
+\end{theorem}
+\begin{proof}
+    This is a consequence of the two previous theorems. 
+    By Theorem 3.1.2, we know that $e \geq \frac{3}{2}f$, where $f$ is the number of faces. 
+    By Theorem 3.1.1, we know that $n - e + f = 2$.
+    Put this two results together to observe that $2 \leq n - e + \frac{2}{3}e$. 
+    Solving for $e$, we obtain the desired inequality that $e \leq 3n - 6$. 
+\end{proof}
+
+\section{Multigraphs and Crossing Numbers}
+If a graph is nonplanar, then that means that the graph cannot be drawn without \textbf{crossings} of edges, where a crossing is an intersection of two edges in $E(G)$ that does not occur at a point of $V(G)$.
+This is an example of a nonplanar graph: 
+\begin{center}
+\begin{tikzpicture}[scale=1.5]
+    \node[circle,draw] (A) at (0,0) {$a$};
+    \node[circle,draw] (B) at (1,0) {$b$};
+    \node[circle,draw] (C) at (1.5,1) {$c$};
+    \node[circle,draw] (D) at (0.5,1.5) {$d$};
+    \node[circle,draw] (E) at (-0.5,1) {$e$};
+    \node[circle,draw] (F) at (-1,0) {$f$};
+    
+    \draw (A) -- (B) -- (C) -- (D) -- (E) -- (F) -- (A);
+    \draw (A) -- (C);
+    \draw (A) -- (D);
+    \draw (B) -- (E);
+    \draw[-] (B) to [bend left] (F);
+    %\draw (B) -- (F);
+    \draw (C) -- (E);
+    \draw (D) -- (F);
+\end{tikzpicture}
+\end{center}
+
+The \textbf{crossing number} of a graph, denoted $cr(G)$ refers to the minimum number of edge crossings in a planar drawing of a given graph. 
+
+Note that some graphs can be drawn with more or less crossings. 
+
+For example, consider the graph $G'$ with vertices $V = \{a, b, c, d, e\}$ and edges $E = \{\{a, b\}, \{b, d\}, \{b, e\}, \{a, d\}, \{c, e\}\}$.
+Below are two visual representations of this graph.
+
+\begin{center}
+  \begin{minipage}{.5\textwidth}
+    \centering
+    \begin{tikzpicture}
+      % Nodes
+      \node[circle, draw, minimum size=1cm] (A) at (0,0) {$a$};
+      \node[circle, draw, minimum size=1cm] (B) at (2,1) {$b$};
+      \node[circle, draw, minimum size=1cm] (C) at (2,-1) {$c$};
+      \node[circle, draw, minimum size=1cm] (D) at (4,0) {$d$};
+      \node[circle, draw, minimum size=1cm] (E) at (6,1) {$e$};
+      % Edges
+      \draw (A) -- (B);
+      \draw (B) -- (D);
+      \draw (B) to[bend left = 20] (E);
+      \draw (A) -- (D);
+      \draw (C) to[bend right = 30](E);
+    \end{tikzpicture}
+  \end{minipage}% <--- This percent sign is important to avoid any space between minipages
+  \begin{minipage}{.5\textwidth}
+    \centering
+    \begin{tikzpicture}
+      % Nodes
+      \node[circle, draw, minimum size=1cm] (A) at (0:2cm) {$a$};
+      \node[circle, draw, minimum size=1cm] (B) at (72:2cm) {$b$};
+      \node[circle, draw, minimum size=1cm] (C) at (144:2cm) {$c$};
+      \node[circle, draw, minimum size=1cm] (D) at (216:2cm) {$d$};
+      \node[circle, draw, minimum size=1cm] (E) at (288:2cm) {$e$};
+      % Edges
+      \draw (A) to[bend left] (B);
+      \draw (B) to[bend left] (D);
+      \draw (B) to (E);
+      \draw (A) to[bend right=50] (D);
+      \draw (C) to[out=315,in=225,looseness=1.5] (E);
+    \end{tikzpicture}
+  \end{minipage}
+\end{center}
+
+Observe that, although $G'$ can be drawn with crossings (shown by the right figure), it can also be drawn without crossings. 
+Because the crossing number refers to the \textit{minimum} number of crossings, we conclude that $cr(G')=0$. 
+
+Because it is impractical to go through every possible drawing of a graph, crossing numbers tend to be difficult to compute exactly.
+It is usually easier to find lower bounds for the crossing number of a graph. 
+
+\begin{theorem}
+    Let $G$ be a simple graph with $n$ vertices and $e$ edges. 
+    Then,
+    \[
+    cr(G) \geq e - 3n + 6
+    \]
+\end{theorem}
+\begin{proof}
+    Begin with a graph $G$ that is not necessarily planar - i.e., the graph has crossings. 
+    One at a time, delete edges with crossings until the graph becomes planar. 
+    Note that each time such an edge is deleted, this adds $1$ to the crossing number, $cr(G)$
+    This new, planar, graph, which we denote $G'$, now has $e - cr(G)$ edges. 
+    Because the graph is planar, now Theorem 3.1.3 can be applied to state
+    \[
+    e - cr(G) \leq 3n - 6
+    \]
+    Therefore, $e - 3n + 6 \leq cr(G)$, as desired.
+\end{proof}
+
+\begin{theorem}
+    Given a simple graph $G$ with $n$ vertices and $e$ edges such that $e \geq 4n$, then $cr(G) \gtrsim \frac{e^3}{n^2}$.
+\end{theorem}
+The following proof uses the concept of expectation and its linearity; notes on expectations can be found in Appendix C. 
+\begin{proof}
+    Generate a random subgraph $H$ of the original graph $G$ in the following way. 
+    Each vertex in $G$ is in $H$ with probability $p$; that is, there is some Bernoulli random variable that determines whether or not a point from $G$ is kept in $H$.
+    Therefore, the expected number of vertices of $H$ is $np$.
+    Then, any edge in $G$ is kept in $H$ if and only if both vertices are kept. 
+    As such, the probability that a given edge from $G$ is kept in $H$ is $p^2$.
+    It follows that the expected number of edges is $ep^2$. 
+
+    The crucial question to this proof is: how many crossings can we expect in $H$? 
+    Each crossing needs two edges that share no vertices. 
+    Therefore, if one or both of the edges in a crossing of $G$ does not make it into $H$, then the crossing itself does not make it into $H$. 
+    Therefore, a crossing requires a total number of four points, so the expected number of crossings of $H$ is going to be at least $p^4 cr(G)$. 
+    
+    By Theorem 3.2.1, we know that 
+    \begin{align}
+        cr(H) \geq e_H - 3n_H + 6 \geq e_H - 3n_H 
+    \end{align}  where $e_H$ and $n_H$ are the number of edges and vertices, respectively, in $H$.
+    Then, by the linearity of expectation, 
+    \begin{align}
+        E(cr(H)) \geq E(e_H - 3n_H) = E(e_H) - 3E(n_H). 
+    \end{align}
+    Plugging in the values we've computed for the expectations of $cr(H)$, $e_H$, and $n_H$, we can state that 
+    \begin{align}
+        cr(G)p^4 \geq ep^2 - 3np.
+    \end{align}
+    Now, we can choose our $p$ to have this inequality resolve nicely. 
+    Because we assumed that $e \geq 4n$, then $1 \geq \frac{4n}{e}$ and thus $\frac{4n}{e}$ can be a probability. 
+    Plugging this value in for $p$, we find that 
+    \begin{align}
+    cr(G) \frac{(4n)^4}{e^4} \geq e \cdot \frac{(4n)^2}{e^2} - 3n \cdot \frac{4n}{e}. 
+    \end{align}
+    With some algebraic shuffling, we obtain
+    \begin{align}
+    cr(G) \geq \frac{e^3}{64n^2}
+    \end{align}
+    and therefore $cr(G) \gtrsim \frac{e^3}{n^2}$, as desired. 
+\end{proof}
+
+\begin{remark}
+    Note that the initial condition of $e \geq 4n$ does not contradict Theorem $3.1.3$ because Theorem 3.1.3 applies only to planar graphs. 
+\end{remark}
+
+\begin{remark}
+    The crucial aspect of the initial condition, $e \geq 4n$ is that $4 > 3$.
+    If we were to assume $e \geq kn$ as our initial condition, then the inequality would be trivial for $k \leq 3$:
+    \begin{align}
+        cr(G) \geq e - 3n \geq kn - 3n \geq (k - 3)n. 
+    \end{align}
+    Crossing numbers must be at least $0$ and therefore for $k \leq 3$, the statement means nothing. 
+    If $k > 3$, we can follow the same steps as in the proof of Theorem 3.2.2, choosing our $p = \frac{kn}{e}$, to conclude that 
+    \begin{align}
+        cr(G) \geq \frac{e^3(k-3)}{k^3n^2}.
+    \end{align}
+    We know the statement holds for $k \geq 4$; in the case that $3 < k < 4$, because the only lower bound condition on $k$ is that $k > 3$, then as $k \to 3$, this lower bound goes to $0$ and becomes trivial.
+    Therefore for $k > 3$, we cannot identify a fixed constant $c$ such that $cr(G) \geq c\frac{e^3}{n^2}$ that applies to all graphs with $e > 3n$.  
+\end{remark}
+
+So far, we have started with simple, planar graphs. 
+From there, we moved to a slightly more complicated realm of simple, nonplanar graphs. 
+Now, we are ready to introduce graphs that are not simple.
+
+\begin{defn}[Multigraph]
+    A \textbf{multigraph} is a graph in which a given pair of vertices can have more than one edge between them. 
+\end{defn}
+
+In a multigraph $M$, the set of edges $E(M)$ is a multiset. 
+A multiset is a set in which a given element can feature more than once. 
+The number of edges between a pair of vertices in a multigraph is called the edge's \textbf{multiplicity}. 
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{scope}[every node/.style={circle,thick,draw}]
+        \node (B) at (1,0) {B};
+        \node (C) at (3,1) {C};
+        \node (D) at (1,2) {D};
+        \node (E) at (3,3) {E};
+        \node (F) at (0,3) {F};
+    \end{scope}
+
+    \begin{scope}[every edge/.style={draw=black,thick}]
+        \path (B) edge (C);
+        \path (C) edge (D);
+        \path (D) edge (E);
+        \path (E) edge (F);
+        % Adding multiple edges
+        \path (B) edge [bend left] (C);
+        \path (B) edge [bend right] (C);
+        \path (D) edge [bend left] (C);
+        \path (C) edge [bend left] (E);
+        \path (B) edge [bend left] (F);
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+ 
+\begin{theorem} \cite{SzekelyPaper}
+    Given a simple graph $H$, replace each edge with $k$ parallel edges to construct a multigraph $k \cdot H$. 
+    Then, $cr(k \cdot H) = k^2 cr(H)$. 
+\end{theorem}
+\begin{proof}
+    This is because for each crossing in $H$ has $cr(H)$ crossings, so replacing each edge with $k$ parallel edges would result in $k^2 cr(H)$ crossings.   
+    Therefore, each crossing in $H$ provides $k^2$ crossings in $k \cdot H$. 
+    Therefore, $cr(k \cdot H) \leq k^2 cr(H)$. 
+
+    Alternatively, take a drawing of $k \cdot H$.
+    If we choose one representative edge from each set of $k$ parallel edges, then there are $k^{|E(H)|}$ ways to obtain a drawing of $H$ from this drawing of $k \cdot H$.
+
+    Consider a specific crossing in $k \cdot H$.
+    By construction, this crossing corresponds to a crossing in $H$.
+    Because this crossing fixes two specific edges in $k \cdot H$, then there are $k^{|E(H)| - 2}$ ways to obtain a drawing of $k \cdot H$ from $H$ with this chosen crossing. 
+    Therefore, each crossing is counted $k^{|E(H)| - 2}$ times across all $k^{|E(H)|}$ drawings of $H$. 
+
+    By the definition of a crossing number, each drawing of $H$ has at least $cr(H)$ crossings. 
+    Because our specific crossing in $k \cdot H$ features in $k^{|E(H)| - 2}$ drawings of $H$, then 
+    \begin{align}
+    cr(k \cdot H) \geq \frac{k^{|E(H)|} cr(H)}{k^{|E(H)| - 2}}.
+    \end{align}
+    So, $k \cdot H$ must have at least as many crossings as $H$ (which is at least $cr(H)$), multiplied by $k^{|E(H)|}$ and divided by $k^{|E(H)| - 2}$.
+    This is because it's the number of drawings of $H$ one can achieve from $k \cdot H$, divided by the number of these drawings that feature a given crossing. 
+    Therefore, $cr(k \cdot H) \geq k^2 cr(H)$ and thus 
+    \begin{align}
+    cr(k \cdot H) = k^2 cr(H),
+    \end{align}
+    as desired.
+\end{proof}
+% Need to do 
+The following theorem comes from \cite{SzekelyPaper} by Sz\'{e}keley. The proof is based on the one presented in this paper, with some modifications.
+\begin{theorem}
+    Let $G$ be a multigraph with $n$ vertices and $e$ edges.
+    Let $m$ denote the maximum number of edges between any given pair of points. 
+    Then, if $e \geq 5nm$, $cr(G) \geq \frac{ce^3}{(n^2m)}$. 
+\end{theorem}
+
+
+\begin{proof}
+For $0 \leq i \leq \log_2 m - 1$, let $G_i$ be a subgraph of $G$ where two vertices are joined with $t$ edges if and only if in $G$ there are joined by exactly $t$ edges, for $2^i \leq t < 2^{i+1}$, with the exception that if $i = \log_2 m - 1$, it takes edges with multiplicity $2^{i - 1} \leq t \leq 2^{i}$. 
+That is, $G_i$ is the subgraph of $G$ that only takes edges with multiplicity $t$ for $2^i \leq t < 2^{i+1}$ (or $2^i \leq t < 2^{i + 1}$ when $i = \log_2 m - 1)$. 
+Observe that $E(G_i) \cap E(G_j) = \emptyset$ for all $i \neq j$. 
+%because 
+
+Let $A = \{i \in [0, \log_2 m - 1]: |E(G_i)| \leq 2^{i + 3}n \}$. That is, $A$ is the set of integer values $i$ in the interval $[0, \log_2 m - 1]$ such that $G_i$ has less than $2^{i + 3}n$ edges.
+Let $B$ be the complement, $[0, \log_2 m - 1] \backslash A$. 
+Observe that $A$ and $B$ are both finite sets of integers. 
+Also, observe that thanks to log rules, $\log_2 m - 1 = \log_2 m - \log_2 2 = \log_2 \left(\frac{m}{2}\right)$.
+ 
+By the construction of $A$, we can conclude that 
+\begin{align}
+\sum_{i \in A} | E(G_i)| \leq \sum_{i \in A} 2^{i + 3}n \leq 8n \sum_{i = 0}^{\lfloor \log_2 \left(\frac{m}{2}\right) \rfloor} 2^{i}.
+\end{align}
+Then, we can apply the formula for the partial sum of a geometric series by to obtain
+\begin{align}
+    \sum_{i \in A} | E(G_i)| \leq 8n \left(\frac{m}{2} - 1\right) \leq 4mn.
+\end{align}
+
+By assumption, $e = |E(G)| \geq 5mn$, so we can state that
+\begin{align}
+    \sum_{i \in A} |E(G_i)| \leq 4mn = \frac{4}{5} \cdot 5mn \leq \frac{4}{5} e.
+\end{align}
+
+(3.12) allows to generate a lower bound on $\sum \limits_{i \in B} |E(G_i)|$.  
+\begin{align}
+\sum_{i \in B} |E(G_i)| = e - \sum_{i \in A}|E(G_i)| \geq e - \frac{4}{5}e = \frac{e}{5}. 
+\end{align}
+
+For each graph $G_i$, construct a graph $G_i^*$ by replacing all multiple edges in $G_i$ with one edge. 
+Observe that this $G_i^*$ is a simple graph. 
+
+Because each edge in $G_i$ has a multiplicity of at least $2^i$, then the graph $2^i \cdot G_i^*$ is necessarily a subgraph of $G_i$.
+It follows that
+\begin{align}
+    cr(G_i) \geq cr(2^{i} \cdot G_i^*). 
+\end{align}
+By Theorem 3.2.3, $cr(2^{i} \cdot G_i^*) = 2^{2i} cr(G_i^*)$, so we conclude
+\begin{align}
+    cr(G_i) \geq  2^{2i} cr(G_i^*)
+\end{align}
+for all $i$. 
+
+We are now ready to consider the crossing number of the whole graph $G$. 
+Because any pair of edges which crosses in $G_i$ must cross in $G$,  
+\begin{align}
+cr(G) \geq \sum_{i=0}^{\lfloor \log_2 m - 1 \rfloor} cr(G_i). 
+\end{align}
+Then, by (3.15) and (3.16), and because $B \subseteq [0, \log_2 m - 1]$, 
+\begin{align}
+cr(G) \geq \sum_{i=0}^{\lfloor \log_2 m - 1\rfloor} cr(G_i) \geq \sum_{i=0}^{\lfloor \log_2 m - 1 \rfloor} 2^{2i} cr(G_i^*) \geq \sum_{i \in B} 2^{2i} cr(G_i^*).
+\end{align}
+
+Recall our construction of $B$ as the set of integers $i \in [0, \log_2 m - 1]$ such that $|E(G_i)| > 2^{i+3}n$.
+Then, because $G_i$ has a minimum edge multiplicity of $2^i$, then 
+\begin{align}
+    |E(G_i^*)| \geq \frac{|E(G_i)|}{2^i} \geq \frac{2^{i + 3 } n}{2^i} = 4n.
+\end{align}
+Therefore, $|E(G_i^*)| \geq 4n$ for all $i \in B$.
+Then, the condition to apply Theorem 3.2.2 is met and thus $cr(G_i^*) \gtrsim \frac{|E(G_i^*)|^3}{n^2}$. 
+As a result, for some fixed $c > 0$,
+\begin{align}
+\sum_{i \in B} 2^{2i} cr(G_i^*) \geq c\sum_{i \in B} \cdot 2^{2i} \frac{|E(G_i^*)|^3}{n^2}. 
+\end{align}
+Because each edge in $G_i$ has a maximum multiplicity $2^{2i}$, $|E(G_i)| \leq 2^{2i} |E(G_i^*)|$.
+Equivalently, $|E(G_i^*) \geq \frac{|E(G_i)|}{2^{2i}}$. 
+Applying this to (3.19), observe
+\begin{align}
+c\sum_{i \in B} \cdot 2^{2i} \frac{|E(G_i^*)|^3}{n^2} \geq c\sum_{i \in B}  \frac{|E(G_i)|^3}{n^2 \cdot 2^i}.
+\end{align}
+Therefore, connecting (3.17) and (3.20) yields
+
+\begin{align}
+cr(G) \geq c\sum_{i \in B}  \frac{|E(G_i)|^3}{n^2 \cdot 2^i} = \frac{c}{n^2} \sum_{i \in B} \left( \frac{|E(G_i)|}{2^{\frac{i}{3}}} \right)^3. 
+\end{align}
+Then, we can use H\"{o}lder's inequality [see Appendix B] with $p = 3$ and $q = \frac{3}{2}$:
+\begin{align}
+cr(G) \geq \frac{c}{n^2} \cdot \frac{\left(\sum_{i \in B} \frac{e}{2^{\frac{i}{3}}} \cdot 2^{\frac{i}{3}}\right)^3}{\left( \sum_{i \in B} \left(2^{\frac{i}{3}}\right)^{\frac{3}{2}} \right)^2} \geq \frac{c}{n^2m} \left( \sum_{i \in B} |E(G_i)| \right)^3 \geq \frac{ce^3}{n^2m},
+\end{align}
+as desired.
+\end{proof}
+
+\newpage
+\section{Basic Incidence Theory}
+Closely related to graph theory is incidence theory. 
+Let $P$ be a set of $n$ points in $\mathbb{R}^2$ and $L$ be a set of $m$ lines.  
+\begin{defn}
+    An \textbf{incidence} of $P$ and $L$ as a pair $(p,l) \in P \times L$ such that $L$ intersects $p$. 
+\end{defn}
+Intuitively, an incidence is a point from $P$ and a line from $L$ such that $p$ is a point on the line $L$.
+
+Let $I_{P,L}$ be the total number of incidences between your sets $P$ and $L$. 
+It can be difficult to pin down that exact value of $I_{P,L}$, so the following theorem can be helpful in generating a bound:
+\begin{theorem}
+    Given a set $P \subset \mathbb{R}^2$ of $n$ points and a set $L$ of $m$ lines, \[
+    I_{P, L} \leq m \sqrt{n} + n \sqrt{m}
+    \]
+\end{theorem}
+\begin{proof}
+    Define $\delta_{p,l}$ in the following way:
+    \[
+    \delta_{p,l} = \begin{cases}
+        1 & \text{ if $p \in l$}\\
+        0 & \text{ otherwise}
+    \end{cases}.
+    \]
+
+Then, we can express $I_{P,L}$ in terms of $\delta_{pl}$: 
+\begin{align}
+I_{P, L} = \sum_{l \in L} \sum_{p \in P} \delta_{pl}. 
+\end{align}
+Observe that this sum is equivalent to $\sum \limits_{l \in L} \sum \limits_{p \in P} (\delta_{pl} \cdot 1)$. 
+Thus, we can apply the Cauchy-Schwarz inequality [see Appendix B] to obtain
+\begin{align}
+I_{P, L} \leq \left(\sum_{l \in L}  \left(\sum_{p \in P} \delta_{pl} \right)^2 \right)^{\frac{1}{2}} \left( \sum_{l \in L} 1^2 \right)^{\frac{1}{2}} = \sqrt{m} \left(\sum_{l \in L}  \left(\sum_{p \in P} \delta_{pl} \right)^2 \right)^{\frac{1}{2}}.
+\end{align}
+
+Our next step is to pull apart the inner $\left(\sum \limits_{p \in P} \delta_{pl} \right)^2$ as the product of two sequences.
+We can express the value $\left(\sum \limits_{p \in P} \delta_{pl} \right)^2$ as the product of two series, valued the same but indexed differently:
+\begin{align}
+I_{P, L} \leq \sqrt{m} \left(\sum_{l \in L}  \left(\sum_{p \in P} \delta_{pl} \right)^2 \right)^{\frac{1}{2}} = \sqrt{m} \left[\sum_{l \in L} \left( \sum_{p \in P} \delta_{pl} \right) \left( \sum_{p' \in P} \delta_{p'l} \right) \right]^{\frac{1}{2}}.
+\end{align}
+Then, this product of two sequences is the sum of each pairwise product of terms from both sequences. 
+Each pairwise term can be categorized into one of two buckets: either the two terms being multiplied are from the same point $p$, or they are from two different points, $p$ and $p'$. 
+We can change the summation to reflect this:
+\begin{align}
+I_{P, L} \leq \sqrt{m} \left( \sum_{l \in L} \sum_{p \in P} \delta_{pl}^2 + \sum_{l \in L} \sum_{p' \neq p} \delta_{pl} \delta_{p'l} \right)^{\frac{1}{2}}.
+\end{align}
+% Explain this step
+Note for all values of $\delta_{pl}$, $\delta_{pl} = \delta_{pl}^2$, meaning the the above right-hand side can be given by $\sqrt{m} \left( \sum \limits_{l \in L} \sum \limits_{p \in P} \delta_{pl} + \sum \limits_{l \in L} \sum \limits_{p' \neq p} \delta_{pl} \delta_{p'l} \right)^{\frac{1}{2}}$. 
+
+Consider the maximum possible value for this first term. 
+The first term is actually just $I_{P,L}$; therefore, if there are $m$ lines and $n$ points, the most extreme scenario is that every line is on every point.
+That is, that there are at most $mn$ incidences. 
+Therefore, 
+\begin{align}
+I_{P,L} \leq \sqrt{m} \left(mn + \sum \limits_{l \in L} \sum \limits_{p' \neq p} \delta_{pl} \delta_{p'l} \right)^{\frac{1}{2}}. 
+\end{align}
+Now, take a closer look at the second term inside the parentheses. 
+This term is the sum of pairwise products of $\delta_{pl}$ such that the two points are not the same.
+Intuitively, the sum describes the number of pairs of points in $p$ that are both incident to the same line. 
+This intuition can then be used to our advantage; for each pair of distinct points $(p, p') \in P \times P, p \neq p'$, there is at most one line that they both lie on. 
+Therefore, each pair of points can add at \textit{most} $1$ to this sum. 
+This allows for the generation of an upper bound: 
+\begin{align}
+\sum_{l \in L}\sum_{p \neq p'} \delta_{lp}\delta_{lp'} \leq \left| \{(p, p') \in P \times P: p \neq p'\}\right| = n(n-1)
+\end{align}
+% may need some extra explanation
+
+Using this new upper bound, 
+\begin{align}
+I_{P,L} \leq \sqrt{m} (mn + n(n-1))^{\frac{1}{2}}
+ = \sqrt{mn} (m + n - 1 )^{\frac{1}{2}} \leq \sqrt{mn} (m + n)^{\frac{1}{2}}. 
+\end{align}
+
+% Worried about this step -- it may need more justification
+Because $m, n \geq 1$, then the sum of the square roots is going to be greater than the square root of the sum.
+Therefore, 
+\begin{align}
+I_{P, L} \leq \sqrt{mn}(\sqrt{m} + \sqrt{n}) = m \sqrt{n} + n \sqrt{m}, 
+\end{align}
+as desired. 
+\end{proof}
+
+Because of the proximity of graph theory and incidence theory to one another, the two can be used in tandem to uncover results. 
+
+The following theorem and proof come from Sz\'{e}kely in \cite{SzekelyPaper}.
+\begin{theorem}
+ Let $2 \leq k \leq \sqrt{n}$. For $n$ points in the Euclidean plane, at most $\frac{cn^2}{k^3}$ lines contain at least $k$ points.
+\end{theorem}
+\begin{proof}
+    Consider a set $P$ of points and lines $L$ in the plane.
+    Within this set, suppose that $m$ lines contain at least $k$ points.
+    Generate a graph $G$ comprised of all lines containing at least $k$ points and the points incident to them. 
+    That is, each line is broken up into at least $(k-1)$ line segments, which comprise the edges of $G$.
+    Assume that $G$ has $n$ vertices. 
+
+    Because each line contains at least $k-1$ edges, then the number of edges $e$ of $G$ must be at least $m(k-1)$. 
+    Consider first an upper bound for $cr(G)$.
+    By construction, each crossing of $G$ originates from a point of intersection of two lines. 
+    Because each pair of lines can intersect at most once, then, crudely, $cr(G) \lesssim m^2$. 
+    If $e > 4n$, then theorem 3.2.2 applies and $cr(G) \gtrsim \frac{e^3}{n^2} = \frac{m^3(k-1)^3}{n^2}$.
+    Combining the upper and lower bounds of crossing numbers, we find that 
+    $m \lesssim \frac{n^2}{(k-1)^3}$.
+
+    Alternatively, if $e < 4n$, then $m(k-1) < 4n$, so $m < \frac{4n}{k-1}$. Because $k \leq \sqrt{n}$, then  $\frac{n}{k^2} > 1$, meaning that $m < \frac{4n}{k-1} \lesssim \frac{n^2}{k^3}$.
+    Therefore, because $m$ represents the number of lines incident to at least $k$ points, then in all cases, $m \lesssim \frac{n^2}{k^3}$, as desired. 
+\end{proof}
+
+Szemer\'{e}di and Trotter were able to develop a result whose corollary would generalize the result in Theorem 3.3.2.
+The following theorem is from \cite{SzemerediTrotter83}, and the proof is based on that of \cite{thebook}.
+\begin{theorem}[Szemer\'{e}di-Trotter Theorem]
+    With a set $P$ of $n$ points and a set $L$ of $m$ lines, $I_{P, L} = O((mn)^{\frac{2}{3}} + n + m)$.
+\end{theorem}
+\begin{proof}
+    Consider a set $P$ of $n$ points and a set $L$ of $m$ lines in the Euclidean plane.
+    We will construct an \textbf{incidence graph} $G$, where $P$ comprises the vertices of $G$. 
+    The set $E$ of edges of $G$ will be constructed from the line segments connecting points of $P$ on lines of $L$.
+    Let $e$ denote the number of edges of $G$. 
+    
+    Because it takes two vertices incidences to form an edge of $G$, each line $l$ in $L$ contributes $I_{p,l} - 1$ edges to $G$.
+    Summing over all $m$ lines in $L$ allows us to state that 
+    \begin{align}
+        e = \sum_{l \in L} \left(I_{P, l} - 1\right) = I_{P, L} - m. 
+    \end{align}
+    
+    % May need more explanation
+    We now proceed by considering two cases.
+    In the first case, $e < 4n$.
+    Then, because $e = I_{P, L} - m$,
+    \begin{align}
+        I_{P, L} = e + m < 4n + m,
+    \end{align} 
+    so $I_{P, L} = O(n + m)$. 
+
+    In the second case, $e \geq 4n$.
+    This condition means that Theorem 3.2.2 can be applied to state 
+    \begin{align}
+    cr(G) \gtrsim \frac{e^3}{n^2} = \frac{(I_{P,L} - m)^3}{n^2}. 
+    \end{align}
+    Consider what this inequality signifies. The crossing number of a graph denotes the minimum number of times in a graph that edges cross at a point \textit{not} at a vertex (i.e., a point not in $P$).
+    Each pair of lines in $L$ can intersect at most once.
+    Then, because the edges of $G$ originate from lines of $L$, there cannot be more crossings than there are pairs of lines of $L$, ${m \choose 2} \lesssim m^2$. 
+    Therefore, 
+    \begin{align}
+        \frac{(I_{P,L}-m)^3}{n^2} \lesssim cr(G) \lesssim m^2.
+    \end{align}
+    With some algebra, this yields the inequality 
+    \begin{align}
+        I_{P, L} \lesssim (mn)^{\frac{2}{3}} + m.
+    \end{align}
+    % More explanation?
+    Therefore, combining these two cases, we can generate the more general inequality that 
+    \begin{align}
+        I_{P, L} \lesssim (mn)^{\frac{2}{3}} + n + m,
+    \end{align} as desired.
+\end{proof}
+
+The following theorem arrives as a corollary of the one just proven.
+
+\begin{theorem}
+    Let $P$ be a set of $n$ points in the plane.  
+    Let $k \geq 2$. If a line is incident to at least $k$ points, then we call such a line \textbf{$k$-rich}. 
+    \begin{enumerate}[(a)]
+        \item The number of incidences between the points of $P$ and the $k$-rich lines is $I_k = O\left( \frac{n^2}{k^2} + n \right)$ 
+        \item The number of $k$-rich lines is $L_k = O\left(\frac{n^2}{k^3} + \frac{n}{k} \right)$
+    \end{enumerate}
+\end{theorem}
+
+The following proof is based on that of \cite{Solymosi2}.
+
+\begin{proof}
+Let $L_k$ be the number of $k$-rich lines of $L$, and let $I_k$ be the total number of incidences between points of $P$ and $k$-rich lines. We seek to bound both of these values. 
+
+Because there are $L_k$ lines with at least $k$ points on them, then it follows that the total number of incidences, $I_k \geq kL_k$ and, equivalently, $L_k \leq \frac{I_k}{k}$. 
+
+We have $n$ total points, $L_k$ ($k$-rich) lines, so by the Szemer\'{e}di-Trotter Theorem (Theorem 3.3.3), the number of incidences between points of $P$ and $k$-rich lines is
+\begin{align}
+    I_k = O(n^{\frac{2}{3}}L_k^{\frac{2}{3}} + n + L_k).
+\end{align}
+Because $L_k \leq \frac{I_k}{k}$, then 
+\begin{align}
+I_k = O\left(\frac{n^{\frac{2}{3}} I_k^{\frac{2}{3}}}{k^{\frac{2}{3}}} + n + \frac{I_k}{k} \right).
+\end{align}
+For each term in the function bounding $I_k$, we consider the case in which it is dominant [for the definition of dominant, see Appendix A].
+If $\frac{n^{\frac{2}{3}} I_k^{\frac{2}{3}}}{k^{\frac{2}{3}}}$ is dominant, then $I_k \lesssim \frac{n^{\frac{2}{3}} I_k^{\frac{2}{3}}}{k^{\frac{2}{3}}}$ and therefore $I_k = O\left(\frac{n^2}{k^2}\right)$. 
+If $n$ is dominant, then $I_k = O(n)$.
+Finally, if $\frac{I_k}{k}$ is dominant, then $I_k \lesssim \frac{I_k}{k}$ and therefore $k = O(1)$.
+
+To recap: $I_k = O\left(\frac{n^2}{k^2}\right)$, $I_k = O(n)$, or $k = O(1)$. 
+
+We know show that if $k = O(1)$, then $I_k = O\left(\frac{n^2}{k^2}\right)$.
+
+Observe that all lines that are $k + 1$-rich must also be $k$-rich. 
+Therefore, the points incident to $k + 1$-rich lines would also be counted toward the number of points incident to $k$-rich lines. 
+However, the reverse is not necessarily true.
+Therefore, $I_{k+1} \leq I_k$ for all $k$ and thus $I_k$ is maximized when $k$ is minimal.
+By construction, this is when $k = 2$. 
+
+Let us consider what happens when $k = 2$. 
+Let $\mathcal{L}_2$ be the set of $2$-rich lines. 
+Then, by construction,
+\begin{align}
+    I_2 = \sum_{l \in \mathcal{L}_2} I_{P, l}.
+\end{align}
+This means that the total number of incidences of $L_2$ rich lines with points of $P$ is equal to the sum of incidences of each $L_2$ rich line with points of $P$.
+Because each $2$-rich line has at least $2$ incidences with points of $P$, then 
+\begin{align}
+    I_2  = \sum_{l \in \mathcal{L}_2} I_{P, l} \leq 2 \cdot |\mathcal{L}_2| = 2L_2,
+\end{align}
+where $L_2$ is the number of $2$-rich lines. 
+Because every pair of points in $P$ can have a line constructed between them, then there are at most ${n \choose 2}$ lines with at least $2$ points on them. 
+Therefore, 
+\begin{align}
+    I_2 \leq 2L_2 \leq 2 \cdot \frac{n(n-1)}{2} < n^2.
+\end{align}
+Because $I_2$ is maximal, then $I_k < n^2$ for all $k \geq 2$.
+
+Assume $k = O(1)$; that is, $k$ is constant. 
+Then, $I_k < n^2$ and therefore $I_k = O\left(n^2\right)$. Because $k$ is constant, this is equivalent to $O\left(\frac{n^2}{k^2}\right)$, as desired. 
+
+Therefore, we have narrowed to two possibilities: $I_k = O\left(\frac{n^2}{k^2} \right)$ or $I_k = O(n)$. 
+Combining these yields the conclusion in part (a), 
+\begin{align}
+    I_k = O\left(\frac{n^2}{k^2} + n \right).
+\end{align}
+
+Part (b) follows from the results that $L_k \leq \frac{I_k}{k}$ and $I_k \lesssim \frac{n^2}{k^2} + n$:
+\begin{align}
+    L_k &\leq \frac{I_k}{k}\\
+    L_k & \lesssim \frac{1}{k} \left(\frac{n^2}{k^2} + n \right)\\
+    L_k & \lesssim \frac{n^2}{k^3} + \frac{n}{k}.
+\end{align}
+The final line is equivalent to the statement $L_k = O\left(\frac{n^2}{k^3} + \frac{n}{k} \right)$, as desired. 
+ 
+\end{proof}
+
+Part (b) of Theorem 3.3.4 actually allows us to relax the restrictions given in Theorem 3.3.1 from $k \leq \sqrt{n}$ to $k \lesssim \sqrt{n}$. 
+
+\begin{theorem}
+    If $k = O(\sqrt{n})$, then the number of $k$ rich lines in a set $P$ of $n$ points is $O\left(\frac{n^2}{k^3}\right)$.
+\end{theorem}
+\begin{proof}
+    By Theorem 3.3.4, we know that 
+    \begin{align}
+    L_k = O\left(\frac{n^2}{k^3} + \frac{n}{k} \right)
+    \end{align}
+    Because $k \lesssim \sqrt{n}$, then $\frac{1}{\sqrt{n}} \lesssim \frac{1}{k}$. 
+    The following algebra brings us to the desired conclusion:
+    \begin{align}
+        \frac{1}{\sqrt{n}} &\lesssim \frac{1}{k}\\
+        \frac{n}{\sqrt{n}} = \sqrt{n} & \lesssim \frac{n}{k}\\
+        n &\lesssim \frac{n^2}{k^2}\\
+        \frac{n}{k} &\lesssim \frac{n^2}{k^3}.
+    \end{align}
+    Therefore, when $k = O(\sqrt{n})$, $\frac{n}{k} = O\left(\frac{n^2}{k^3}\right)$. 
+    Therefore, 
+    \begin{align}
+        L_k \lesssim \left(\frac{n^2}{k^3} + \frac{n}{k} \right) \lesssim \frac{n^2}{k^3}.
+    \end{align}
+    Thus, $L_k = O\left(\frac{n^2}{k^3}\right)$, as desired.
+\end{proof}
+
+The next theorem will be helpful in the $n^{\frac{6}{7}}$ section. 
+This is working towards a theorem by Beck, but rather than using Beck's original proof (which is lengthy and highly technical), we use the method and statement of \cite{Solymosi2}. 
+
+\begin{theorem}
+    Let $P$ be a set of $n$ points in the plane. 
+    Define a set $F$ whose elements are pairs of points $P$.
+    Denote $|F|$ as $f$. 
+    Then, for a fixed positive constant $C$, one of the statements must hold:
+    \begin{enumerate}
+        \item There are at least $\frac{f}{4}$ pairs of points that are on lines incident to at least $\frac{f}{Cn}$ points
+        \item There are at least $\frac{f}{4}$ pairs of points on lines incident to at least $\frac{Cn^2}{f}$ points. 
+    \end{enumerate}
+\end{theorem}
+\begin{proof}
+    Let $u$ and $v$ be integers such that $u < v$. 
+    Let $N_{u, v}$ denote the number of pairs of distinct points of $P$ whose line goes through at least $u$ and at most $v$ points of $P$. 
+    We seek an upper bound on $N_{u, v}$.
+
+    Let $L$ denote the set of all possible lines through at least $2$ points.
+    Then, we can express $N_{u,v}$ as a sum,
+    \begin{align}
+        N_{u,v} = \sum_{l \in L: u \leq I_{P, l} \leq v} {I_{P, l} \choose 2}.
+    \end{align}
+
+    First observe that because $u < v$, all $v$-rich lines are also $u$-rich and therefore the number of $u$-rich lines is greater than or equal to the number of $v$-rich lines. 
+    By Theorem 3.3.4 (b), the number of $u$-rich lines is $O\left(\frac{n^2}{u^3} + \frac{n}{u}\right)$.
+    This provides an upper bound on the number of lines $l$ such that $u \leq I_{P, l}$ and therefore also provides an upper bound on the number of lines $l$ such that $u \leq I_{P, l} \leq v$.
+
+    Therefore, 
+    \begin{align}
+        N_{u,v} = \sum_{l \in L: u \leq I_{P, l} \leq v} {I_{P, l} \choose 2} \lesssim \left(\frac{n^2}{u^3} + \frac{n}{u}\right) \cdot {I_{P, l} \choose 2}.
+    \end{align}
+
+    We now seek a bound on ${I_{P, l} \choose 2}$. 
+    Because $I_{P, l} \leq v$, then ${I_{P, l} \choose 2} \leq {v \choose 2} \lesssim v^2$.
+    For the sake of simplicity, we will use $v^2$ as an upper bound rather than ${v \choose 2}$. 
+    Continuing from (3.46), 
+    \begin{align}
+        N_{u,v} \lesssim \left(\frac{n^2}{u^3} + \frac{n}{u}\right) \cdot {I_{P, l} \choose 2} \lesssim \left(\frac{n^2}{u^3} + \frac{n}{u}\right) \cdot v^2,
+    \end{align}
+    which can be simplified to state that 
+    \begin{align}
+        N_{u,v} = O\left(\frac{n^2v^2}{u^3} + \frac{nv^2}{u} \right).
+    \end{align}
+
+    This is a crude upper bound, however. 
+    To improve it, we can partition $[u, v]$ in the following way:
+    \begin{align}
+    N_{u, v} \leq \sum_{i=0}^{\lfloor \log_2 \left(\frac{v}{u}\right) \rfloor} N_{2^i u, 2^{i+1} u}.
+    \end{align}
+This partition is an overestimate, as the rightmost endpoint of the final interval is equal to $2v$, which is greater than $v$. 
+\begin{center}
+\begin{tikzpicture}
+% Draw the number line
+\draw (0,0) -- (\textwidth,0);
+% Draw and label ticks on the line
+\foreach \x/\label in {0/$u$, 0.05/$2u$, 0.15/$4u$, 0.3/$8u$, 0.8/{$2^{\lfloor\log\left(\frac{v}{u}\right)\rfloor}u$}, 0.88/{$v$}, 1/{$2^{\lfloor\log\left(\frac{v}{u}\right)\rfloor+1}u$}}{
+    \draw (\x*\textwidth, 0) -- (\x*\textwidth, -5pt) node [below] {\label};
+}
+\node at (0.55*\textwidth, -15pt) {$\cdots$};
+\end{tikzpicture}
+\end{center}
+
+We can now apply Theorem 3.3.4 to each sub-interval in the partition. 
+For each $i$,
+\begin{align}
+N_{2^i u, 2^{i+1} u} = O \left(\frac{n^2 \cdot (2^{i+1} u)^2}{(2^i u)^3} + \frac{n(2^{i+1} u)^2}{(2^iu)^3} \right) = O\left(\frac{4n^2}{2^i u} + 4n 2^i u\right).
+\end{align}
+Use this result in conjunction with (3.56) to observe that
+\begin{align}
+N_{u, v} \leq \sum_{i=0}^{\lfloor \log \left(\frac{v}{u}\right) \rfloor} N_{2^i u, 2^{i+1} u} \lesssim \sum_{i=0}^{\lfloor \log \left(\frac{v}{u}\right) \rfloor} \left(\frac{4n^2}{2^i u} + 4n2^i u \right).
+\end{align}
+Use the properties of summation to state that 
+\begin{align}
+    \sum_{i=0}^{\lfloor \log \left(\frac{v}{u}\right) \rfloor} \left(\frac{4n^2}{2^i u} + 4n2^i u \right) &\lesssim \frac{n^2}{u} \sum_{i=0}^{\lfloor \log \left(\frac{v}{u} \right) \rfloor} 2^{-i} + nu \sum_{i=0}^{\lfloor \log \left(\frac{v}{u} \right) \rfloor} 2^i.
+\end{align}
+Then, because of the formula for the partial sum of a geometric series,
+\begin{align}
+    \frac{n^2}{u} \sum_{i=0}^{\lfloor \log \left(\frac{v}{u} \right) \rfloor} \left(\frac{1}{2}\right)^{i} + nu \sum_{i=0}^{\lfloor \log \left(\frac{v}{u} \right)\rfloor} 2^i &= \frac{n^2}{u} \left( \frac{1 - \frac{1}{2^{\lfloor \log \left(\frac{v}{u} \right) \rfloor}}}{1 - \frac{1}{2}} \right) + nu \left(\frac{1 - 2^{\lfloor \log \left(\frac{v}{u} \right)\rfloor}}{1-2}\right).
+\end{align}.
+Now, because $\lfloor \log \left(\frac{v}{u} \right) \rfloor \leq \log \left(\frac{v}{u} \right)$, it follows that $2^{\lfloor \log \left(\frac{v}{u} \right) \rfloor} \leq 2^{\log \left(\frac{v}{u} \right)} = \frac{v}{u}$ and therefore  $-\frac{1}{2^{\lfloor \log \left(\frac{v}{u} \right) \rfloor}} \leq - \frac{u}{v}$. 
+
+This allows for an elegant simplification of these otherwise messy numbers:
+\begin{align}
+    \frac{n^2}{u} \left( \frac{1 - \frac{1}{2^{\lfloor \log \left(\frac{v}{u} \right) \rfloor}}}{1 - \frac{1}{2}} \right) + nu \left(\frac{1 - 2^{\lfloor \log \left(\frac{v}{u} \right)\rfloor}}{1-2}\right) &\leq \frac{2n^2}{u} \left(1 - \frac{v}{u} \right) + nu \left(\frac{v}{u} - 1\right)\\
+    \frac{2n^2}{u} \left(1 - \frac{v}{u} \right) + nu \left(\frac{v}{u} - 1\right) &= \left(nu - \frac{2n^2}{u} \right) \left(\frac{v}{u} - 1\right)\\
+    \left(nu - \frac{2n^2}{u} \right) \left(\frac{v}{u} - 1\right) &= nv - \frac{2n^2}{u^2} - nu + \frac{2n^2}{u} \leq nv + \frac{2n^2}{u}.
+\end{align}
+Therefore, connecting the first and last link in these chain of inequalities, we conclude that 
+\begin{align}
+N_{u, v} \lesssim nv + \frac{n^2}{u}.
+\end{align}
+This means that there exists a suitable positive constant, $C_0$ such that $N_{u,v} \leq C_0 \left( \frac{n^2}{u} + nv\right)$. 
+
+Let $C = 4C_0$. Let $u = \frac{Cn^2}{f}$ and $v = \frac{f}{Cn}$. 
+If $u \geq v$, then the statement of the theorem is trivial. 
+Otherwise, by (3.64) and the definitions of $u$, $v$, and $C$,
+\begin{align}
+    N_{u, v} &\leq C_0 \left(\frac{n^2}{u} + nv \right) \\
+    C_0 \left(\frac{n^2}{u} + nv \right) & \leq C_0 \left(\frac{n^2 f}{4C_0 n^2} + \frac{nf}{4C_0n} \right) = \frac{f}{2}
+\end{align}
+Therefore, $N_{u,v} \leq \frac{f}{2}$. 
+That means that at most $\frac{f}{2}$ pairs of points of $P$ generate lines that go between $\frac{Cn^2}{f}$ and $\frac{f}{Cn}$ points of $P$. 
+Therefore, there are at least $\frac{f}{2}$ pairs of points that do not do this. 
+That is, there are at least $\frac{f}{2}$ pairs of points which generate lines that fall into one of two categories: either they have fewer that $\frac{Cn^2}{f}$ points, or more than $\frac{f}{Cn}$ points. 
+Then, by the pigeonhole principle, one of these categories has at least $\frac{f}{4}$ pairs of points, bringing us to the desired conclusion.
+\end{proof}
+
+The following theorem of Beck \cite{Beck} now follows as a corollary from Theorem 3.12. 
+
+\begin{theorem}
+    For a set $P$ of $n$ points in the plane, at least one of the following statements holds:
+    \begin{enumerate}
+        \item There is a line incident to $\Omega(n)$ points.
+        \item There are at least $\Omega(n^2)$ lines incident to at least two points. 
+    \end{enumerate}
+\end{theorem}
+\begin{proof}
+    Let $F$ be the set of all pairs of distinct pairs of points of $P$. 
+    Then $|F| = f = {n \choose 2} = \frac{n(n-1)}{2}$. 
+    Therefore, by Theorem 3.12, at least one of the following statements holds:
+    \begin{enumerate}
+        \item At least $\frac{f}{4} = \frac{n(n-1)}{8}$ pairs of points are on lines incident to at least $\frac{f}{Cn} = \frac{(n-1)}{2C}$ points. 
+        \item At least $\frac{f}{4} = \frac{n(n-1)}{8}$ pairs of points are on lines incident to at most $\frac{Cn^2}{f} = \frac{2Cn^2}{n(n-1)}$ points. 
+    \end{enumerate}
+    In the case of the first statement, that means that there are at least $\approx n^2$pairs of points on lines incident to at least $\frac{n(n-1)}{8} \approx n$ points. 
+    This means that there must exist a line with $\Omega(n)$ points, proving the first claim.
+
+    In the case of the second statement, that means that there are at least $\approx n^2$ pairs of points on lines who are incident to at most $\approx n$ points. 
+    Therefore, there are $\Omega(n^2)$ pairs of points who have lines that have a bounded number of incidences.
+    However, each of these lines has at least two incidences, by virtue of the fact that they are generated by a pair of points. 
+    Therefore, there are $\Omega(n^2)$ lines incident to at least two points, as desired.
+\end{proof}
+
+% ASK
+\begin{remark}
+    In Beck's original formulation of the theorem, he was able to pin down a constant for the first statement of $\frac{1}{100}$. 
+\end{remark}
+
+\chapter{Erd\H{o}s Bounds Using Graph Theory Techniques}
+
+\section{Notes on Bisectors}
+The two major proofs in this chapter use the geometric object of bisectors. 
+
+For the sake of clarity, the definition of a bisector and relevant result are presented here before proceeding with the proofs. 
+
+We use the definition from \cite{thebook}. 
+
+\begin{defn}[Bisector]
+    Given two points $p, q$ in the plane, the bisector $l_{p, q}$ is the set of all points that are equidistant from $p$ and $q$.
+\end{defn}
+Using set builder notation, this definition can equivalently be expressed as
+\[
+l_{p, q} = \{x \in \mathbb{R}^2 : |p - x| = |q - x|\}. 
+\]
+
+\begin{theorem}
+    A point $c$ is the center of a circle intersecting $p$ and $q$ if and only if $c$ lies on the bisector $l_{p, q}$.
+\end{theorem}
+\begin{proof}
+    This follows as a consequence of the definition of a bisector. 
+    Let $C$ be a circle centered at $c$ of radius $r$ such that $C$ has incidences with $p$ and $q$. 
+    Then, $|p - c| = r = |q - c|$.
+    Therefore, $c$ is equidistant from $p$ and $q$ and therefore lies on the bisector of $l_{p, q}$. 
+
+    For the reverse direction: let $c$ be a point on $l_{p, q}$.
+    Then by construction, $|p - c| = |q - c| = r$, so we can construct a circle centered at $c$ with radius $r$ that intersects both $p$ and $q$.
+\end{proof}
+
+\section{$n^{\frac{4}{5}}$ bound}
+As we approach higher bounds, principles from graph theory and incidence theory begin to come into play. 
+
+The following bound comes from that of Sz\'{e}kely from \cite{SzekelyPaper}.
+
+Before proving Sz\'{e}kely's result, we first prove the following lemma:
+\begin{lemma}
+    Let $P$ be a set of $n$ points. 
+    For an integer $a \geq K\sqrt{n}$, for a constant $K > 1$, the number of lines that have between $a$ and $2a$ incidences with points of $P$ is $O\left(\frac{n}{a}\right)$. 
+\end{lemma}
+The proof of this lemma is loosely based on that of \cite{thebook}, with some modifications. 
+\begin{proof}
+    Let $N_a$ refer to the number of lines with at least $a$ and at most $2a$ incidences with points of $P$. 
+    We seek to show that $N_a = O\left(\frac{n}{a}\right)$. 
+    
+    Let $L = \{L_i\}$ denote the set of lines that have at least $a$ incidences with points of $P$. 
+    For each $L_i \in L$, let $A_i$ refer to the set of points on this line with at least $a$ incidences.
+    Naturally, $|A_i|$ denotes the number of points of $P$ incident to the associated line $L_i$.
+    Order the $L_i$ such that $|A_{i - 1}| \leq |A_i|$ for all $i$. 
+
+    First, observe $\bigcup_i A_i \subseteq P$ and therefore $\left| \bigcup_i A_i \right| \leq |P| = n$.
+    Then, if we consider just the $A_i$ who have at \textit{most} $2a$ incidences, then it follows that
+    \begin{align}
+    n \geq \left| \bigcup_{a \leq |A_i| \leq 2a} A_i \right|.
+    \end{align}
+    Now, because there are $N_a$ lines with between $a$ and $2a$ points, and $|A_i| \geq a$ for all $i$, then we can express this union more specifically as 
+    \begin{align}
+    \left| \bigcup_{a \leq |A_i| \leq 2a} A_i \right| = \left| \bigcup_{i=1}^{N_a} A_i \right|.
+    \end{align}
+    At this point, we don't necessarily know that the $A_i$'s are disjoint.
+    Therefore, in order to express the cardinality of the union as a sum, we must ensure disjointedness by taking the complement of all previous sets for each new $A_i$: 
+    \begin{align}
+    \left| \bigcup_{i=1}^{N_a} A_i \right| = \sum_{i=1}^{N_a} \left|A_i \backslash \bigcup_{j=1}^{i-1} A_j \right|.
+    \end{align}
+    Now, only the ``new points'' in each subsequent $A_i$ are being counted towards our sum, and there is no multiple counting of points. 
+
+    Let us now seek a bound $\left|A_i \backslash \bigcup_{j=1}^{i-1} A_j \right|$. 
+    First, observe that 
+    \begin{align}
+        \left|A_i \backslash \bigcup_{j=1}^{i-1} A_j \right| = \left|A_i\right| - \left|\bigcup_{j=1}^{i-1} (A_i \cap A_j)\right|.
+    \end{align}
+
+    We know that $|A_i| \geq a$ by construction.
+    However, to obtain a lower bound for this difference, we must obtain an upper bound for $\left|\bigcup_{j=1}^{i-1} (A_i \cap A_j)\right|$. 
+
+    Consider an arbitrary $(A_i \cap A_j)$ in this union; it is clear that $i \neq j$. 
+    Observe that for all $i \neq j$, the two lines $L_i$ and $L_j$ can only intersect at most once. 
+    Therefore, there can only be at most one incidence point in common, so $|A_i \cap A_j| \leq 1$ for all $i \neq j$. 
+    Additionally, because each $A_j$ is distinct for $1 \leq j \leq i - 1$. 
+    Therefore, 
+    \begin{align}
+        \left|\bigcup_{j=1}^{i-1} (A_i \cap A_j)\right| \leq \sum_{j=1}^{i-1} \max |A_i \cap A_j| = \sum_{j=1}^{i-1} 1 = i -1 \leq i.
+    \end{align}
+    Therefore, we can conclude that 
+    \begin{align}
+        \left|A_i \backslash \bigcup_{j=1}^{i-1} A_j \right| = \left|A_i\right| - \left|\bigcup_{j=1}^{i-1} (A_i \cap A_j)\right| \geq \sum_{i=1}^{N_a} \max(0, a - i)
+    \end{align}
+
+    Therefore, each line $A_j \in \bigcup_{j=1}^{i-1} A_j$ has at most $1$ incident with the points of $A_i$. 
+    Therefore, because $a$ is the minimum number of points on each line, and at most $i$ lines are being subtracted from it:
+    \begin{align}
+    \sum_{i=1}^{N_a} \left|A_i \backslash \bigcup_{j=1}^{i-1} A_j \right| \geq \sum_{i=1}^{N_a} \max(0, a -  i).
+    \end{align}
+
+    Assume toward a contradiction that $N_a \geq \frac{K^2n}{a}$. 
+    Then, 
+    \begin{align}
+    \sum_{i=1}^{N_a} \max(0, a -  i) \geq \sum_{i=1}^{\frac{K^2n}{a}} \max(0, a -  i). 
+    \end{align}
+
+    Now, consider the values for which $\max(0, a -  i)$ is $a-i$; that is, where $a \geq i$. 
+
+    If $a < \frac{K^2n}{a}$, then $a^2 < K^2n$ and therefore $a < K\sqrt{n}$.
+    However, we have assumed that $a > K\sqrt{n}$, so $a \geq i$ for all indices $i$.
+
+    Therefore, 
+    \begin{align}
+    \sum_{i=1}^{N_a} \max(0, a -  i) \geq \sum_{i=1}^{\frac{K^2n}{a}} (a - i) = \frac{K^2n}{a} \cdot a + \sum_{i=1}^{\frac{K^2n}{a}} i. 
+    \end{align}
+    This second sum is clearly positive, as all indices are positive. 
+    Therefore, 
+    \begin{align}
+    \frac{K^2n}{a} \cdot a + \sum_{i=1}^{\frac{K^2n}{a}} i \geq \frac{K^2n}{a} \cdot a  = K^2n. 
+    \end{align}
+
+    Then, combining (4.1) and (4.10), we achieve the contradiction of $n \geq K^2n$. 
+    Therefore, $N_a \leq \frac{K^2n}{a}$ and (more generally) $N_a = O\left(\frac{n}{a}\right)$. 
+\end{proof}
+
+\begin{theorem}
+    Let $P$ be a set of $n$ points in the plane.
+    Then, there exists a single point that determines $\Omega \left(n^{\frac{4}{5}}\right)$ distances. 
+\end{theorem}
+The following theorem and proof are based on that of \cite{SzekelyPaper}.
+\begin{proof}
+The proof of this theorem requires construction of a multigraph $G$ from our set of points $P$. 
+Let $t$ denote the maximum number of distinct distances from a single point. 
+Assume that $t = o\left(\frac{n}{\log n}\right)$.
+Otherwise, Erd\H{o}s's original conjecture would hold and there would be nothing to prove.
+
+For each point $p$ in $P$, construct a circle centered at $p$ that intersects at least one other point of $P$.
+That is, each pair of points $a, b$ in $P$ is responsible for the construction of a circle, where point $a$ is the center of the circle and the distance between them, $|a-b|$, is the radius. 
+
+By construction, each point has at most $t$ circles around it, so the total number of circles constructed is at most $nt$. 
+
+Observe that
+\begin{align}
+    cr(G) \leq 2(nt)^2,
+\end{align}
+for there are at most $nt$ circles, each pair of which can cross at most twice. 
+
+Now, delete all circles (including the points of $P$ they contain) that have fewer than three points. 
+
+We can now construct a graph whose vertices are the remaining points of $P$ and the edges are the arcs between them. 
+Then we have a graph $G$ with $\approx n$ vertices and $\approx n^2$ edges.
+
+We may assume that there are at most $2t$ edges connecting any pair of vertices.
+This is because each pair of points on lies on at most $t$ circles (for each distinct distance with another point $c$ which would provide the center), and each individual circle can provide up to $2$ edges.
+
+The following lemma will allow us to bound the number of edges, despite the high edge multiplicities. 
+\begin{lemma}
+    The number of pairs $(f, a)$ such that $a$ is an arc which represents an edge of $g$, and $f$ is the symmetry axis of $a$ such that $f$ is incident to at least $k$ points of $P$ is $O\left(\frac{tn^2}{k^2} + n \log n \right)$. 
+\end{lemma}
+\begin{proof}
+    Let us begin by considering what it means for a point to lie on the symmetry axis of an arc $a$. 
+    By construction, the arc $a$ is a piece of a circle between two points, $x$ and $y$; the symmetry axis would then be  bisector of the line segment between them.
+    Therefore, by Theorem 4.1.1, any point on $c$ on the bisector $f$ is the center of a circle of radius $|c - x| = r$ who passes through $x$ and $y$. 
+    This is an important observation: any point on $f$ uniquely corresponds with a circle that intersects the endpoints of $a$, $x$ and $y$.
+    Because we deleted all circles with fewer than three points, this ensures that no circle provides more than one edge between any given pair of points. 
+    Therefore, this one-to-one correspondence between points of $f$ and circles can be generalized to state that there any point on $f$ uniquely corresponds with an edge between the endpoints of $x$ and $y$, $a$. 
+
+    Furthermore, any point $c$ on $f$ has at most $t$ circles around it, by construction. 
+    Each of these circles can intersect $f$ at most twice, so each point $c$ on $f$ can provide at most $2t$ bisected edges. 
+    % Picture
+    
+    By Theorem 3.3.5, the number of lines incident to at least $2^i$ points is $O\left(\frac{n^2}{2^{3i}}\right)$, as long as $2^i \lesssim \sqrt{n}$. 
+    % Rephrase me
+    We now seek to bound the number of pairs $(f, a)$, where each $f$ has between $k$ and $\sqrt{n}$ points on it. 
+
+    
+    We obtain the bound
+    \begin{align}
+    |\{(f, a) \}| \leq \sum_{i: k \leq 2^i \leq \sqrt{n}} \frac{cn^2}{2^{3i}} \cdot 2^i \cdot 2t \leq \sum_{i: k \leq 2^i \leq \sqrt{n}} \frac{ctn^2}{(2^i)^2}. 
+    \end{align}
+    Let's unpack where this bound comes from.
+    We partition the set of lines $f$ based on the number of points they are incident to through the intervals $[k, 2k], [2k, 4k], \dots, [2^{\log_2 \lfloor \sqrt{n} \rfloor}, \sqrt{n}]$.
+    Each line $f$ is incident to at least $2^i$ points, so by Theorem 3.3.2, there are at most $\frac{cn^2}{2^{3i}}$ such $2^i$-rich lines. 
+    For each of these lines, there are $2^i$ points on it, so we multiply that by the number of lines to obtain the number of points across all such lines.
+    Finally, because each point has at most $t$ circles around it, each point provides at most $2t$ distinct edges (arcs) which pass through the line.
+    We multiply this by the number of points to get the bound for the number of arcs shown in (4.12). 
+
+    Then, because $k \leq 2^i$, we can observe that 
+    \begin{align}
+        \sum_{i: k \leq 2^i \leq \sqrt{n}} \frac{ctn^2}{(2^i)^2} \leq \sum_{i: k \leq 2^i \leq \sqrt{n}} \frac{ctn^2}{k^2} \leq \frac{ctn^2}{k^2}
+    \end{align}
+    
+
+    What about for such $i$ between $\sqrt{n}$ and $n$?
+   Because of Lemma 4.2.1, the number of lines with between $2^i$ and $2^{i+1}$ points is at most $\frac{cn}{2^i}$.
+   
+   Therefore, since each line contains $2^i$ points, these lines contribute at most 
+   \begin{align}
+   \sum_{i: \sqrt{n} \leq 2^i < n} ct\frac{n}{2^i} \cdot 2^i
+   \end{align}
+   $(f, a)$ pairs.
+
+   Note that if $\sqrt{n} < 2^i < n$, then $\log_2(\sqrt{n}) < i \leq \log_2(n)$, so there are up to $\frac{1}{2} \log_2 (n)$ such indices $i$ over which we sum.
+   Therefore, 
+   \begin{align}
+   \sum_{i: \sqrt{n} < 2^i < n} ct\frac{n}{2^i} \cdot 2^i < ctn \sum_{\log_2(\sqrt{n}) < i < \log_2(n)} 1 = ctn \frac{1}{2}\log_2 n = ctn \log n.
+   \end{align}
+   Putting together the bounds in (4.13) and (4.15), we find that the number of pairs is $O\left(\frac{tn^2}{k^2} + tn \log n \right)$. 
+   % Sum
+\end{proof}
+
+We can now return to the proof of the greater theorem.
+
+Thanks to Theorem 4.1.1, each pair $(f, a)$, where $f$ is a line with at least $k$ points and $a$ is an edge in $G$ with bisector $f$, corresponds uniquely with a pair of points with at least $k$ edges between them.
+
+Delete all edges with multiplicity $k = K\sqrt{t}$ for some suitable constant $K$ such that $|E(G')| \geq 5nK\sqrt{t}$.
+Then, Lemma 4.2.3 ensures that at most $c\left(\frac{n^2}{K^2} + n \log n\right)$ have been deleted from $G$.
+Because $n \log n = O(n^2)$, then that means that at most $O(n^2)$ edges have been deleted from $G$.
+Therefore, because $|E(G)| = \Omega(n^2)$
+\begin{align}
+|E(G')| \geq |E(G)| - cn^2 \gtrsim n^2 - cn^2 \approx n^2
+\end{align}
+Then we have a multigraph, $G'$ that still has $\approx n^2$ edges. 
+Observe that because $G'$ is a subgraph of $G$,
+\begin{align}
+    cr(G') \leq cr(G) \lesssim n^2t^2,
+\end{align}
+by (4.11).
+Because $|E(G')|$ has a maximum edge multiplicity of $K\sqrt{t}$, and $E \geq 5nK\sqrt{t}$ by construction, then we can apply Theorem 3.2.4 to state that 
+\begin{align}
+cr(G') \gtrsim \frac{|E(G')|^3}{n^2}{K\sqrt{t}}
+\end{align}
+Because $|E(G')| \approx n^2$, then 
+\begin{align}
+cr(G') \gtrsim \frac{n^6}{n^2\sqrt{t}}
+\end{align}
+Therefore, 
+\begin{align}
+2n^2t^2 \gtrsim \frac{n^6}{n^2 \sqrt{t}}
+\end{align}
+and thus
+\begin{align}
+t^5 \gtrsim n^4
+\end{align}
+so we get the desired result, $t = \Omega\left(n^{\frac{4}{5}}\right)$.
+\end{proof}
+
+\newpage
+\section{$n^{\frac{6}{7}}$ bound}
+Solymosi and T\'{o}th improved upon Sz\'{e}kely's bound; the following theorem is from \cite{Solymosi}, and the proof presented is based on \cite{Solymosi} and \cite{thebook}. 
+\begin{theorem}
+    Let $P$ be a set of $n$ points. 
+    Then, there exists at point that determines $\Omega\left(n^{\frac{6}{7}}\right)$ distinct distances. 
+\end{theorem}
+
+\begin{proof}
+Let $t$ be the maximal number of distinct distances measured from a given point. Assume $t = o(n)$, or there would be nothing to prove. 
+By Sz\'{e}kely's argument, $t = \Omega(n^{\frac{4}{5}})$ as well. 
+
+This theorem requires the use of Theorem 3.3.6. 
+As a reminder, this theorem states that 
+\begin{enumerate}
+    \item There is a line incident to $\Omega(n)$ points, and 
+    \item there are at least $\Omega(n^2)$ lines incident to at least two points. 
+\end{enumerate}
+
+This first statement can be equivalently expressed as ``there is a line incident to at least $\alpha n$ points of $P$, where $\alpha$ is a fixed positive constant.''
+Observe that $\alpha \leq 1$ by necessity, as there cannot be a line incident to more points than there are in the plane. 
+
+Let $L$ be the set of all lines connecting at least two points of $P$. 
+
+The following corollary emerges from Theorem 3.3.6:
+\begin{corollary}
+    If $t < \alpha n - 1$, there exists a constant $c_0 > 0$ such that the number of points in $P$ incident to at least $c_0 n $ distinct lines in $L$ is at least $c_0 n$.
+\end{corollary}
+
+\begin{proof}
+    First, observe that if $t < \alpha n - 1$, then the first statement of theorem 3.3.6 cannot hold.
+    Say there was a line incident to at least $\alpha n$ points; then this line alone would contribute at least $\alpha n - 1$ distinct distances, based on the distance from the leftmost (or uppermost, if the line is vertical) point to every subsequent point. 
+    
+    Therefore, we conclude the second statement: there are at least $\beta n^2$ lines incident to at least two points  for some positive constant $\beta$.
+    By construction, each line is incident to at least $2$ points of $P$, so there are at least $2\beta n^2$ incidences between $P$ and $L$. Equivalently, 
+    \begin{align}
+        I_{P, L} \geq 2\beta n^2
+    \end{align}
+
+    Let $c_0 \geq \sqrt{2\beta}$. 
+    Consider the set of points $Q \subseteq P$ who are incident to at least $c_0 n$ distinct lines of $L$. 
+    Let $q = |Q|$.
+    Then, because $Q \subseteq P$, it follows that $I_{Q,L} \leq I_{P, L}$.
+    Because each point in $Q$ provides at least $c_0n$ incidences, 
+    \begin{align}
+        q \cdot c_0 n \leq I_{Q, L} \leq I_{P, L} \leq 2\beta n^2
+    \end{align}
+    
+However, because $c_0 \geq \sqrt{2\beta}$, then
+\begin{align}
+q \leq \frac{2\beta}{c_0} n \leq \frac{c_0^2}{c_0}n = c_0n
+\end{align}.
+Therefore, there exists a suitable constant $c_0$ such that the number of points incident to at least $c_0 n$ lines is $c_0n$, completing the proof. 
+\end{proof}
+
+Define a set $B \subseteq P$ of points incident to at least $c_0 n$ lines in $L$. 
+By the above corollary, $|B| \geq c_0 n$ and therefore $B$ is nonempty. 
+
+Fix a point $a \in B$. 
+By construction, $a$ is incident to at least $c_0 n$ lines. 
+Now, define a set $P_a$ such that $P_a$ is maximal and for each pair of points $q_1, q_2 \in P_a$, the rays $\overrightarrow{aq_1}$ and $\overrightarrow{aq_2}$ form distinct angles with the $x$-axis. 
+
+Define a set $C_a$ of circles centered at $a$ such that each circle intersects at least three points in $P_a$. Then, define $P_a'$ as the subset of $P_a$ containing the points on circles of $C_a$. 
+
+By construction, each circle in $C_a$ contains at least three points. 
+Delete at most two points from each circle in $C_a$ such that the number of points on the circle is a multiple of $3$. 
+Then, the points on each circle can be partitioned into pairwise disjoint triples of the form $(q_1, q_2, q_3)$, where the only point between $q_1$ and $q_3$ is $q_2$.
+Partition and order the triples of $|P_a'|$ in the following way:
+\begin{enumerate}
+    \item Begin in the innermost circle in $C_a$ and identify the point $q_1$ such that $aq_1$ is minimal for this circle. 
+    \item Move around the circle counterclockwise until you have two more points.
+    \item Continue counterclockwise around the circle, placing consecutive points into triples until all points in the first circle are processed.
+    \item Repeat the process for the rest of the circles, working outward, until all triples are processed. 
+\end{enumerate}
+
+\begin{proposition}
+    $|P_a'| = \Omega(n)$. 
+\end{proposition}
+\begin{proof}
+   Recall that $a$ is incident to at least $c_0 n$ distinct lines. 
+    Each of these lines contains some other point $q \in P$, so each distinct line provides at least one ray $\overrightarrow{aq}$.
+    Because the lines are distinct, no two lines provide two rays of the same orientation and therefore each line provides at least one point to $P_a$.
+    Because there are at least $c_0 n$ distinct lines, there must be at least $c_0 n$ points in $P_a$ and so $|P_a| \geq c_0n$. 
+
+    Because $t = o(n)$, we know that for sufficient $n$, $t < \frac{c_0}{3}n$ and therefore $3t < c_0n$.
+    Because there are at most $t$ circles around $a$, and more than $3t$ points in $P_a$, then there must exist at least one circle with at least three points and therefore $P_a'$ is nonempty. 
+    Likewise, there are at most $t - 1$ circles whose points (of which there are at most $2$ for each circle) are discarded, meaning that 
+    \begin{align}
+        |P_a'| \geq |P_a| - 2t + 2 \geq c_0 n - 2t + 2.
+    \end{align}
+    Because $t = O(n)$, this 
+    \begin{align}
+        c_0 n - 2t + 2 \geq c_0n - 2t + 2 \geq c_0 n - O(n) = \Omega(n),
+    \end{align}
+    meaning $|P_a'| = \Omega(n)$, as desired.
+\end{proof}
+
+\begin{proposition}
+    The number of disjoint triples $(q_1, q_2, q_3)$ over all circles around $a$ is $\Omega(n)$.
+\end{proposition}
+\begin{proof}
+    Because the triples are constructed from points of $|P_a'|$, let us ``retrace our steps.''
+    There are at most $t$ circles around $a$, and we deleted at most $2$ points from each circle, so the number of disjoint triples is at least $\frac{|P_a'| - 2t}{3}$. 
+    Now, because $|P_a'| = \Omega(n)$, and $t = O(n)$, then $|P_a'| - 2t \gtrsim n$ and thus the number of triples around $a$ is $\Omega(n)$. 
+\end{proof}
+
+We call a triple \textit{good} if the bisector of at least one of the pairwise line segments ($q_1q_2$, $q_2q_3$, $q_1q_3$) is incident to fewer than $m$ points. 
+Otherwise, the triple is \textit{bad}. We will further specify the value of $m$ later. 
+
+Extending this definition, we describe a point $p \in B$ as \textit{good} if at least half of the triples associated with it (that is, half of the triples on the circles of $C_p$) are good. Let $g$ refer to the total number of good points in $B$. 
+
+We are now ready to construct a multigraph $G$. 
+The vertices of $G$ will be provided by the points of $P$. 
+Naturally, $G$ has $n$ vertices.
+
+The edges of $G$ will arise from the above definitions of ``good.''
+By construction, each good triple has at least one pair of points whose bisector is not rich.
+If more than one pair has a bisector that's not rich, choose one. 
+It is these such pairs that will provide the edges of $G$.
+The edges will be constructed by the arc between them on the circle. 
+Therefore, each good triple provides exactly one edge. 
+
+\begin{proposition}
+    Let $e = |E(G)|$. 
+    Then, 
+    \[e = \Omega(gn).\]
+\end{proposition}
+\begin{proof}
+    We seek to find a lower bound on the number of edges. 
+    The only time that we can guarantee the existence of a good triple and therefore the introduction of an edge is in the case of good points, as good points are guaranteed to have at least one good triple. 
+    By Proposition 4.2.4, each point in $B$ has $\Omega(n)$ triples over all circles. 
+    Because our point is good, we know that at least half of these triples provide an edge to $G$, so a given good point provides $\Omega \left(\frac{1}{2} n \right) = \Omega(n)$ edges. 
+    Then, because there are $g$ good points, there must be at least $g \cdot \Omega(n) = \Omega(gn)$ edges.
+\end{proof}
+
+Let's consider the maximum edge multiplicity of this graph. 
+The edges are chosen to be pairs of points such that their bisector has fewer than $m$ lines on it.
+The number of points on the bisector has a one-to-one correspondence with the number of circles that the given pair of points lies on.
+Because each circle has at least $3$ points, then, like in the previous section, every circle can provide at most one edge between a given pair of points. 
+Therefore, because there are at most $m$ points on the bisector, then the pair of points lie on at most $m$ circles and thus there are at most $m$ edges between the given pair of points. 
+Our maximum edge multiplicity is $m$.
+
+Let $m = \frac{c_1n^2}{t^2}$ for a constant $c_1 > 0$, which we will restrict so that at least half of the points of $B$ are bad. 
+
+We now proceed with two cases to show that a choice of such a $c_1$ is possible. 
+In the first case, $e < 5nm = \frac{5c_1n^3}{t^2}$. In this case, the condition necessary to apply Theorem 3.2.4 is not met.  
+
+Because $t = \Omega(n^{\frac{4}{5}})$ and $n^{\frac{4}{5}} = \Omega(n^{\frac{3}{4}})$, then $t = \Omega(n^{\frac{3}{4}})$. 
+Therefore, $t \geq \gamma n^{\frac{3}{4}}$ for some fixed $\gamma > 0$. 
+We can use this to conclude that 
+\begin{align}
+    e < \frac{5c_1 n^3}{t^2} \leq \frac{5c_1 n^3}{\gamma n^2} = \frac{5c_1}{\gamma} n^{\frac{3}{2}}
+\end{align}
+By proposition 4.2.5, we know that $|E(G)| = e = \Omega(gn)$, so $e \geq \lambda gn$ for some $\lambda > 0$.
+Therefore, combining this with the previous equation, we can state that
+\begin{align}
+    \lambda gn & \leq e \leq \frac{5c_1}{\gamma} n^{\frac{3}{2}}\\
+    g & \leq \frac{5c_1}{\gamma \lambda} n^{\frac{1}{2}} \leq \frac{5c_1}{\gamma \lambda} n.
+\end{align}
+Therefore, $g = O(n)$.
+Choose $c_1 \leq \frac{c_0 \lambda \gamma}{10}$ so that $\frac{5c_1}{\gamma \lambda} \leq \frac{c_0}{2}$. 
+Then, 
+\begin{align}
+    g \leq \frac{5c_1}{\gamma \lambda} n \leq \frac{c_0}{2} n.
+\end{align}
+
+In the second case, $e \geq 5nm$ and therefore theorem 3.2.4 can be applied to state
+\begin{align}
+    cr(G) \geq \frac{\rho e^3}{mn}^2 = \frac{\rho e^3 t^2}{c_1 n^4},
+\end{align}
+for some fixed $\rho > 0$.
+Then, because $e =\geq \lambda n$, 
+\begin{align}
+     cr(G) \geq \frac{\rho e^3 t^2}{c_1 n^4} \geq \frac{\rho \lambda g^3 n^3 t^2}{c_1 n^4} = \frac{\rho \lambda g^3 t^2}{c_1 n}.
+\end{align}
+
+To find an upper bound for $cr(G)$, consider the construction of the edges. 
+Because each edge is an arc from a circle, then each pair of edges can intersect up to twice. 
+Because there are $n$ points and at most $t$ circles around each point, then there are at most $nt$ total circles.
+These observations lead us to the following inequality:
+\begin{align}
+    cr(G) \leq 2 \cdot {nt \choose 2} \leq n^2t^2.
+\end{align}
+Putting together (4.32) and (4.33), we can collapse this into one inequality and isolate $g$.
+\begin{align}
+    \frac{\rho \lambda g^3 t^2}{c_1 n} & \leq n^2t^2\\
+    g^3 & \leq \frac{c_1}{\rho \lambda} n^3\\
+    g & \leq n \sqrt[3]{\frac{c_1}{\rho \lambda}}
+\end{align}
+
+
+In this case, choose $c_1 \leq \frac{\rho \lambda c_0^3}{8}$.
+Then,
+\begin{align*}
+    g & \leq n \sqrt[3]{\frac{c_1}{\rho \lambda}} \leq \frac{c_0}{2} n.
+\end{align*}
+Therefore, in both cases, as long as $c_1 \leq \min \{\frac{c_0 \lambda \gamma}{10}, \frac{\rho \lambda c_0^3}{8}\}$, then setting $m = \frac{c_1 n^2}{t^2}$ is going to result the number of good points being less than $\frac{c_0}{2} n$. 
+Then, the number of bad points will be given by:
+\begin{align}
+    |B| - g \geq c_0 n - \frac{c_0}{2}n = \frac{c_0}{2}n,
+\end{align}
+meaning that $|B| - g \geq \frac{c_0}{2}n$ and therefore at least half of the points of $B$ are bad.
+We conclude that $\Omega(n)$ points of $B$ are bad. 
+
+Let us now consider the set of bad triples in $P_a'$ along the circles centered at $a$ for a fixed point $a \in B$. 
+Recall that in a bad triple, all pairwise line segments have at least $m$ lines on their bisectors.
+
+Order the triples in the same way as described earlier in the proof. 
+
+Define a function $f$ that maps a point $u$ in a bad triple to the counterclockwise angle between the $x$-axis and the ray $\overrightarrow{au}$.
+Because $P_a'$ is constructed to not have any points of the same angles, this map $f$ is one-to-one from the set of bad points to $[0, 2\pi]$.
+
+We have a sequence of $N$ triples of the form $(a_i, b_i, c_i)$, where $a_i = f(u), b_i = f(v), c_i = f(w)$ for some points $u, v, w$ who form a bad triple.
+\begin{proposition}
+    Our sequence of $N$ triples has the following properties:
+\begin{enumerate}
+    \item $a_i, b_i, c_i$ are distinct
+    \item $a_i < b_i < c_i$ 
+    \item $c_i < a_{i+1}$ for all but at most $t - 1$ times
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+    
+The first property arises from the fact that $f$ is one-to-one. 
+The second property arises from our ordering of the triples; each triple is constructed by moving counterclockwise and adding consecutive points.
+The third property comes from the fact that there are only $t$ circles. 
+The only time $c_i < a_{i+1}$ is when we jump to the next circle. Because there are at most $t$ circles, such a jump can occur at most $t - 1$ times. 
+\end{proof}
+
+\begin{lemma}
+    Construct a set $T$ of $N$ triples, $(a_i, b_i, c_i)$, of distinct real numbers where $a_i < b_i < c_i$ for all $i$ and $c_i \geq a_{i+1}$ for at most $t - 1$ indices. 
+    Let $W$ be the set of pairwise sums of each triple in $T$:
+    \[
+    W = \{a_i + b_i, a_i + c_i, b_i + c_i : i = 1, 2, \dots, N\}.
+    \]
+    Then, 
+    \[
+    |W| = \Omega\left(\frac{N}{t{\frac{2}{3}}}\right)
+    \]
+    \begin{proof}
+        Define the \textit{range} of a triple as the interval $[a, c]$.
+        Consider the sequence $(a_1, b_1, c_1, a_2, b_2, c_2, \dots, a_N, b_N, c_N)$.
+        By assumption, there are at most  $t - 1$ places in which this sequence is not strictly increasing; namely, where $c_{i} < a_{i+1}$. 
+        Therefore, we can partition t into at most $t$ monotone increasing subsequences. 
+
+        Choose one of these open intervals and denote it $s$. 
+        Let $W_s \subseteq W$ be the subset of $W$ defined in the following way:
+        \[
+        W_s = \{a_i + b_i, a_i + c_i, b_i + c_i : [a_i, c_i] \subset s\}.
+        \]
+        By assumption, for each triple $(a_i, b_i, c_i)$ whose range is contained in $s$, $a_i < b_i < c_i$.
+        This means that each entry in the triple is distinct and therefore each pairwise sum is distinct. 
+        Therefore, each triple contributes exactly three elements to $W_s$. 
+        Because each triple in $s$ is distinct, then no two triples contribute the same three elements to $W_s$. 
+        Therefore, for every set of three elements in $W_s$, there is at most exactly one unique triple of $T$. 
+        There are ${|W_s| \choose 3} \leq |W_s|^3$ ways to choose triples from $W_s$. 
+        Then, because there are $t$ triples in the interval:
+        \begin{align}
+            t \lesssim |W_s|^3,
+        \end{align}
+        and thus 
+        \begin{align}
+            t^{\frac{1}{3}} \lesssim |W_s|.
+        \end{align}
+        Then, because there are at least $\frac{N}{2t}$ intervals whose triples are disjoint by construction, then $|W| \lesssim \frac{N}{2t} \cdot t^{\frac{1}{3}} \approx \frac{N}{2t^{\frac{2}{3}}}$, completing the proof of the lemma. 
+    \end{proof}
+\end{lemma}
+
+Notice that our set of $N$ triples meets the requirements of Lemma 4.2.7, so the set of pairwise sums $W$ has a cardinality that is $\Omega\left(\frac{N}{t{\frac{2}{3}}}\right)$.
+Because $N$ refers to the number of bad triples of $B$ then $N$ is bounded below by the number of bad points.
+This is because each bad point is guaranteed to contribute at least one bad triple. 
+Therefore, because there are $\Omega(n)$ bad points, then $N = \Omega(n)$.
+
+Therefore, $|W| = \Omega\left(\frac{n}{t{\frac{2}{3}}}\right)$. 
+
+However, notice that for each pairwise sum $a_i + b_i$ of points in a bad triple, this corresponds with a line segment whose perpendicular bisector (which is incident to $a$) is $m$-rich.
+Therefore, we can construct a bijection between $W$ and the set of $m$-rich lines incident to $a$, so the number of $m$-rich lines incident to $a$ is $\Omega \left(\frac{n}{t^{\frac{2}{3}}}\right)$. 
+Because $a$ is a fixed arbitrary bad point, and there are $\Omega(n)$ bad points, then the number of incidences between $m$-rich lines and bad points is $\Omega(n) \cdot \Omega \left(\frac{n}{t^{\frac{2}{3}}}\right) = \Omega\left(\frac{n^2}{t^{\frac{2}{3}}}\right)$. 
+
+\begin{proposition}
+    The number of $m$-rich lines, $L_m$, is $O\left(\frac{t^6}{n^4} \right)$. 
+\end{proposition}
+\begin{proof}
+    By Theorem 3.3.4, the number of $m$ rich lines, $L_m = O\left( \frac{n^2}{m^3} + \frac{n}{m} \right)$.
+    Because $m = \frac{c_2n^2}{t^2}$, then 
+    \begin{align}
+    L_m =  O\left( \frac{n^2}{m^3} + \frac{n}{m} \right) = O\left(\frac{n^2t^6}{c_2^3 n^6} + \frac{n t^2}{c_2n^2}\right) = O\left(\frac{t^6}{n^4} + \frac{t^2}{n}\right).
+    \end{align}
+    
+    However, consider $\frac{n}{m}$.
+    Because $t = \Omega(n^{\frac{3}{4}})$, then $n^3 \lesssim t^4$, so
+    \begin{align}
+        \frac{n}{m} = \frac{n^3}{mn^2} \lesssim \frac{t^4}{mn^2}.
+    \end{align}
+    Then, because $m \approx \frac{n^2}{t^2}$,
+    \begin{align}
+        \frac{t^4}{mn^2} \lesssim \frac{t^6}{n^4} \approx \frac{n^2}{m^3},
+    \end{align}
+    so $\frac{n}{m} = O\left(\frac{n^2}{m^3}\right)$.
+    Because $L_m = O\left( \frac{n^2}{m^3} + \frac{n}{m} \right)$, we can state that $L_m = O\left( \frac{n^2}{m^3}\right)$ and therefore $L_m = O\left(\frac{t^6}{n^4} \right)$, as desired.
+\end{proof}
+
+We can use this result to consider the total number of incidences between bad points and $m$-rich lines. 
+There are at most $n$ points total and thus the number of bad points is $O(n)$. 
+By Proposition 4.3.8, we know that the number of $m$-rich lines is $O\left(\frac{t^6}{n^4} \right)$. 
+Then, by the Szemer\'{e}di-Trotter Theorem, the number of incidences is
+\begin{align}
+    I_{m} = O\left((nL_m)^{\frac{2}{3}} + n + L_m\right) = O\left(\frac{t^4}{n^2} + n + \frac{t^6}{n^4}\right)
+\end{align}
+
+Because $t \lesssim n$ and $n^3 \lesssim t^4$, then 
+\begin{align}
+    n = \frac{n^3}{n^2} \lesssim \frac{t^4}{n^2}, 
+\end{align}
+so $n = O\left(\frac{t^4}{n^2}\right)$. 
+
+For the same reasons,
+\begin{align}
+    \frac{t^6}{n^4} \lesssim \frac{n^2 t^4}{n^4}  = \frac{t^4}{n^2},
+\end{align}
+so $\frac{t^6}{n^4} = O\left(\frac{t^4}{n^2}\right)$.
+Therefore, when saying the number of incidences is $O\left(\frac{t^4}{n^2} + n + \frac{t^6}{n^4}\right)$, we can collapse this is to the much simpler statement, the number of incidences is $O\left(\frac{t^4}{n^2}\right)$. 
+
+Therefore the number of incidences is bounded below by $\Omega \left(\frac{n^2}{t^{\frac{2}{3}}}\right)$ and above by $O\left(\frac{t^4}{n^2}\right)$. 
+Therefore, 
+\begin{align}
+    \frac{n^2}{t^{\frac{2}{3}}} &\lesssim \frac{t^4}{n^2}\\
+    n^4 & \lesssim t^{\frac{14}{3}}\\
+    n^{\frac{6}{7}} &\lesssim t, 
+\end{align}
+obtaining the desired result.
+
+\end{proof}
+\newpage
+\section{Improved Bounds}
+Since the publishing of Solymosi and T\'{o}th's paper illuminating the $n^{\frac{6}{7}}$ bound, more advancements have been made in the field, eventually finding a tight bound. 
+
+Katz and Tardos improved upon the bound with the following theorem:
+\begin{theorem}\cite{KatzTardos}
+    For all $\epsilon > 0$, for any set $P$ of $n$ points in the plane, there exists an element that has at least 
+    \[
+    \Omega \left(n^{\frac{48 - 14e}{55 - 16e} - \epsilon}\right)
+    \]
+    distinct distances, where $e$ is the base of the natural logarithm. 
+\end{theorem}by generalizing the connection that Solymosi and T\'{o}th made between the Erd\H{o}s distance problem and the distinct sums provided by triples. 
+Instead of triples Katz and Tardos investigated the minimum number of distinct pairwise sums of entries in a row of a matrix, and built on further results. 
+
+Guth and Katz solved the problem in 2011, with the following theorem:
+\begin{theorem}\cite{GuthKatz}
+    Given a set $P$ of $n$ points, 
+    \[
+    |\Delta(P)| = \Omega \left(\frac{n}{\log n}\right).
+    \]
+\end{theorem}
+Guth and Katz were able to show this bound was tight.
+However, notably, they did not prove that there was a single point from which there is $\Omega\left(\frac{n}{\log n}\right)$ distances. 
+    
+\newpage
+
+
+\chapter{Conclusion and Future Questions}
+    Because of the opaque nature of much of the literature on this topic, significant time 
+     in the development of this thesis was dedicated to chasing down details in existing proofs.
+     Because of this experience, the primary objective of this thesis was to provide a highly lucid resource for students of this topic to be able to more quickly and thoroughly understand the existing techniques and results in this branch of mathematics. 
+    Specifically, the proofs of Theorems 3.2.4, Lemma 4.2.1, and Theorem 3.3.5 were ones that I required significant adaptation from the source material so that each ``trivial'' or ``obvious'' claim could be rigorously proven.
+    To the best of my knowledge, this thesis is the first to include these modified theorems.  
+
+    Although Guth and Katz were able to provide a sharp bound for $|\Delta(P)|$, there are still remaining questions that I wrestled with, but was unsuccessful in providing an answer for.
+    Such questions included:
+    \begin{itemize}
+        \item How can Sz\'{e}kely's method of crossing number arguments be used to construct a toy argument, to show that there exists a point that contributes $\Omega\left(n^{\frac{2}{3}}\right)$ distinct distances?
+        \item How can Solymosi and T\'{o}th's methods of distinct triples be used to construct arguments for $n^{\frac{2}{3}}$ and $n^{\frac{4}{5}}$ bounds?
+        \item Is there a way to show that there exists one point that contributes $\Omega\left(\frac{n}{\log n}\right)$ distances? What is the sharpest bound for the number of distances that one point must contribute? 
+    \end{itemize}
+    These questions signify that further  opportunities in this topic are available for interested researchers. 
+    Hopefully, this thesis can lay a groundwork for such endeavors and can lead to the facilitation of future research. 
+    
+\bibliography{references}
+
+\appendix
+
+\chapter{Asymptotic Results}
+Because this thesis handles much asymptotic behavior of functions using big-$O$ notation, some notable and useful results are compiled here. 
+
+\begin{theorem}
+    If $f(n) = o(g(n))$, then $f(n) = O(g(n))$. 
+\end{theorem}
+\begin{proof}
+    Because $f(n) = o(g(n))$, we know that $\lim_{n \to \infty} \frac{f(n)}{g(n)} = 0$. 
+    Therefore, for every $\epsilon > 0$, we can find a value $N$ such that for all $n \geq N$, $\left|\frac{f(n)}{g(n)}\right| < \epsilon$. 
+    Because $\frac{f(n)}{g(n)} \leq \left|\frac{f(n)}{g(n)}\right|$, then $\frac{f(n)}{g(n)} < \epsilon$ as well and therefore $f(n) < \epsilon g(n)$ for sufficient $n$. 
+    Therefore, $f(n) = O(g(n))$.
+\end{proof}
+
+\begin{theorem}
+    If $f(n) = O(g(n))$, then $f(n) + g(n) = O(g(n))$.
+\end{theorem}
+\begin{proof}
+    Because $f(n) = O(g(n))$, then we know that there exists some $N$ such that for $n \geq N$, $f(n) < cg(n)$ for a fixed constant $c$. 
+    Then, for $n \geq N$, $f(n) + g(n) < (c + 1) g(n)$ and therefore $f(n) + g(n) = O(g(n))$, as desired. 
+\end{proof}
+
+\begin{theorem}
+    For two functions $f(n)$ and $g(n)$, either $f(n) = O(g(n))$, $g(n) = O(f(n))$, or both. 
+\end{theorem}
+\begin{proof}
+    Regardless the relationship between $f(n)$ and $g(n)$ for large $n$, there are three possibilities. 
+    The first is that $f(n) \lesssim g(n)$, in which case $f(n) = O(g(n))$. 
+    The second is that $g(n) \lesssim f(n)$, in which case $g(n) = O(f(n))$. 
+    The third and final case is that $f(n) \approx g(n)$, meaning $f(n) \lesssim g(n)$ \textit{and} $g(n) \lesssim f(n)$, so $f(n) = O(g(n))$ and $g(n) = O(f(n))$.
+\end{proof}
+In such cases where there are more than one function and all functions are $O(f(n))$ for some function $f$, we refer to $f$ as the \textbf{dominant term}. 
+This terminology is used in the proof of Theorem 3.3.5.
+
+\chapter{Common Results}
+
+\begin{theorem}[Pigeonhole Principle]
+    If there are $n$ pigeons, and $k$ holes that they can be placed in, then at least one hole must contain at least $\frac{n}{k}$ pigeons. 
+\end{theorem}
+\begin{proof}
+    Assume toward a contradiction that no such hole exists. 
+    Then, all of the holes contain $< \frac{n}{k}$ pigeons.
+    Because there are $k$ holes, then the total number of pigeons would be less than $k \cdot \frac{n}{k} = n$, which contradicts the assumption that there are $n$ pigeons.
+\end{proof}
+In the above statement and proof, we used the terminology of ``pigeons'' and ``holes'' as a nod to the name, but it applies to any general idea of $n$ objects with $k$ categories. 
+
+The following statement and proof are from \cite{thebook}.
+\begin{theorem}[Cauchy-Schwarz Inequality]
+    For two sequences $(a_k), (b_k)$ of real numbers, 
+    \[
+    \sum_{k=1}^n a_k b_k \leq \left(\sum_{k=1}^n a_k^2\right)^{\frac{1}{2}} \left(\sum_{k=1}^n b_k^2\right)^{\frac{1}{2}}.
+    \]
+\end{theorem}
+\begin{proof}
+    Let $X_n = \left(\sum \limits_{k=1}^n a_k^2\right)^{\frac{1}{2}}$ and $Y_n =  \left(\sum \limits_{k=1}^n b_k^2\right)^{\frac{1}{2}}$. 
+
+    First consider $\sum_{k=1}^n a_k b_k$.
+    This can be equivalently expressed as 
+    \begin{align}
+    \sum_{k=1}^n a_k b_k = X_n Y_n \sum_{k=1}^n \frac{a_k}{X_n} \cdot \frac{b_k}{Y_n}.
+    \end{align}
+
+    Now, observe for any real numbers $c, d$, because $(c-d)^2 \geq 0$, then $c^2 - 2cd + d^2 \geq 0$ and thus $cd \leq \frac{c^2 + d^2}{2}$. 
+    We can apply this concept to (B.1), with $c = \frac{a_k}{X_n}$ and $d = \frac{b_k}{Y_n}$:
+    \begin{align}
+        X_n Y_n \sum_{k=1}^n \frac{a_k}{X_n} \cdot \frac{b_k}{Y_n} \leq X_n Y_n \sum_{k=1}^n \left[ \frac{1}{2} \left(\frac{a_k}{X_n}\right)^2 + \frac{1}{2} \left(\frac{b_k}{Y_n}\right)^2 \right].
+    \end{align}
+
+    Put together (B.1) and (B.2) to obtain:
+    \begin{align}
+        \sum_{k=1}^n a_k b_k \leq X_n Y_n \sum_{k=1}^n \left[ \frac{1}{2} \left(\frac{a_k}{X_n}\right)^2 + \frac{1}{2} \left(\frac{b_k}{Y_n}\right)^2 \right]. 
+    \end{align}
+    The right-hand side can be equivalently written as
+    \begin{align}
+        \sum_{k=1}^n a_k b_k \leq \frac{Y_n}{2X_n} \sum_{k=1}^n a_k^2 + \frac{X_n}{2Y_n} \sum_{k=1}^n b_k^2.
+    \end{align}
+    However, because $X_n = \left(\sum \limits_{k=1}^n a_k^2\right)^{\frac{1}{2}}$ and $Y_n =  \left(\sum \limits_{k=1}^n b_k^2\right)^{\frac{1}{2}}$, then
+    \begin{align}
+        \frac{Y_n}{2X_n} \sum_{k=1}^n a_k^2 + \frac{X_n}{2Y_n} \sum_{k=1}^n a_k^2 =\frac{X_n Y_n}{2} + \frac{X_n Y_n}{2} = X_n Y_n.
+    \end{align}
+    Tacking together (B.4) and (B.5) and substituting in our definitions of $X_n$ and $Y_n$, we achieve the desired inequality:
+    \begin{align}
+        \sum_{k=1}^n a_k b_k \leq X_n Y_n = \left(\sum \limits_{k=1}^n a_k^2\right)^{\frac{1}{2}}\left(\sum \limits_{k=1}^n b_k^2\right)^{\frac{1}{2}}.
+    \end{align}
+\end{proof}
+
+Related to the Cauchy-Schwarz Inequality is H\"{o}lder's inequality, which is used in the proof of Theorem 3.2.4. 
+The following proof is based on the outline from \cite{thebook} and techniques mentioned in \cite{2148138}. 
+
+\begin{theorem}[H\"{o}lder's Inequality]
+    Let $p, q > 1$ such that $\frac{1}{p} + \frac{1}{q} = 1$.
+    Then,
+    \[
+    \sum_{k=1}^n a_k b_k \leq \left(\sum_{k=1}^n |a_k|^p\right)^{\frac{1}{p}} \left(\sum_{k=1}^n |b_k|^q\right)^{\frac{1}{q}}
+    \]
+\end{theorem}
+\begin{proof}
+    We first seek to show that $ab \leq \frac{a^p}{p} + \frac{b^q}{q}$ for positive real $a$ and $b$. 
+
+    Let $a^p = e^x$ and $b^q = e^y$ for some $y$.
+    Let $t = \frac{1}{p}$. 
+    Then, $a = e^{tx}$ and $b = e^{y(1-t)}$. 
+    So, we seek to show that
+    \begin{align}
+        ab = e^{tx + (1-t)y} \leq te^{x} + (1-t)e^{y} = \frac{a^p}{p} + \frac{b^q}{q}.
+    \end{align}
+    Therefore, we seek to show that the exponential function is convex. 
+    Then, because $\frac{d^2}{dt} \left(e^t\right) = e^t > 0$, then the second derivative is nonnegative on all of [0,1] and thus convex. 
+    Then, by (B.7), for any positive real numbers $a, b$, 
+    \begin{align}
+        ab \leq \frac{a^p}{p} + \frac{b^q}{q}
+    \end{align}
+    This can be generalized for all real $ab$ by stating
+    \begin{align}
+        ab \leq |ab| = |a||b| \leq \frac{|a|^p}{p} + \frac{|b|^q}{q}.
+    \end{align}
+
+    Let $X_n = \left(\sum \limits_{k=1}^n a_k^p\right)^{\frac{1}{p}}$ and $Y_n =  \left(\sum \limits_{k=1}^n b_k^q\right)^{\frac{1}{q}}$. 
+    Now, consider the sum
+    \begin{align}
+        \sum_{k=1}^n \frac{|a_k|}{X_n} \cdot \frac{|b_k|}{Y_n}.
+    \end{align}
+    By (B.9), 
+    \begin{align}
+        \sum_{k=1}^n \frac{|a_k|}{X_n} \cdot \frac{|b_k|}{Y_n} \leq \sum_{k=1}^n \left(\frac{1}{p} \cdot \frac{|a_k|^p}{X_n^p} + \frac{1}{q} \cdot \frac{|b_k|^q}{Y_n^q}\right) = \frac{1}{p X_n^p} \sum_{k=1}^n |a_k|^p + \frac{1}{q Y_n^q} \sum_{k=1}^n |b_k|^q.
+    \end{align}
+
+    Observe that $\sum_{k=1}^n |a_k|^p = X_n^p$ and $\sum_{k=1}^n |b_k|^q = Y_n^q$. 
+    Therefore, we can simplify the rightmost expression in (B.11) to obtain the result:
+    \begin{align}
+        \sum_{k=1}^n \frac{|a_k|}{X_n} \cdot \frac{|b_k|}{Y_n} \leq \frac{1}{p} + \frac{1}{q}.
+    \end{align}
+    Thus,
+    \begin{align}
+        \sum_{k=1}^n |a_k||b_k| \leq \frac{X_n}{p} + \frac{Y_n}{q}.
+    \end{align}
+    By our definitions of $X_n$ and $Y_n$, as well as by the fact that $|a_k||b_k| \geq a_kb_k$, we can obtain H\"{o}lder's Inequality:
+    \begin{align}
+        \sum_{k=1}^n a_kb_k \leq \frac{1}{p} \left(\sum \limits_{k=1}^n a_k^p\right)^{\frac{1}{p}} + \frac{1}{q} \left(\sum \limits_{k=1}^n b_k^q\right)^{\frac{1}{q}}.
+    \end{align}
+    
+    
+\end{proof}
+
+\chapter{Notes on Expectation}
+\begin{defn}[Definition]
+    For a given discrete random variable $X$, the expectation is defined as 
+    \[
+    E(X) = \sum_{i=1}^n x_kp_k,
+    \]
+    where each $x_k$ is a possible outcome of $X$ and $p_k$ is the associated probability of that outcome. 
+\end{defn}
+
+\begin{theorem}[Linearity of Expectation]
+    For two discrete random variables $X, Y$ and for $\alpha, \beta \in \mathbb{R}$, 
+    \[
+    E(\alpha X + \beta Y) = \alpha E(X) + \beta E(Y).
+    \]
+\end{theorem}
+\begin{proof}
+    Use the definition of expectation to write $E(\alpha X + \beta Y)$.
+    Then, the proof just follows algebraically.
+    \begin{align}
+        E(\alpha X + \beta Y) &= \sum_{i=1}^n (\alpha x_k + \beta y_k)p_k\\
+        &= \alpha \sum_{i=1}^n x_k p_k + \beta \sum_{i=1}^n y_k p_k\\
+        &= \alpha E(X) + \beta E(Y).
+    \end{align}
+\end{proof}
+
+\end{document}
